@@ -258,7 +258,7 @@ final class AppShellStateMachineTests: XCTestCase {
         XCTAssertEqual(shell.sessionWorkspaceCountForTesting, 0)
     }
 
-    func testFailedAutosaveRetainsSessionWorkspaceForRecovery() async {
+    func testFailedAutosaveRetainsSessionWorkspaceAndExportForRecovery() async {
         let shell = AppShellDriver()
         let projectPath = "/tmp/failed-save.openrecorder"
         let session = EditorSession(
@@ -270,6 +270,7 @@ final class AppShellStateMachineTests: XCTestCase {
         let snapshot = makeWorkspaceAutosaveSnapshot(path: projectPath, kind: .video)
         var statuses: [ProjectAutosaveStatus] = []
         let exportStarted = expectation(description: "Export started")
+        let exportCanceled = expectation(description: "Export is canceled explicitly")
         let temporaryURL = URL(fileURLWithPath: "/tmp/failed-save-export.mov")
         var cancellationToken: VideoExportCancellationToken?
         var deletedURLs: [URL] = []
@@ -288,6 +289,7 @@ final class AppShellStateMachineTests: XCTestCase {
                 while !token.isCancelled && !Task.isCancelled {
                     await Task.yield()
                 }
+                exportCanceled.fulfill()
                 throw CancellationError()
             },
             temporaryURL: { _ in temporaryURL },
@@ -314,8 +316,15 @@ final class AppShellStateMachineTests: XCTestCase {
         XCTAssertEqual(shell.sessionWorkspaceCountForTesting, 1)
         XCTAssertTrue(workspace.state.isAutosaveRecoveryPresented)
         XCTAssertEqual(statuses.last, .failed("Save failed"))
+        XCTAssertFalse(cancellationToken?.isCancelled == true)
+        XCTAssertEqual(workspace.videoExport.state.phase, .exporting)
+        XCTAssertEqual(deletedURLs, [])
+
+        workspace.videoExport.cancelExport()
+        await fulfillment(of: [exportCanceled], timeout: 1)
+
         XCTAssertTrue(cancellationToken?.isCancelled == true)
-        XCTAssertEqual(workspace.videoExport.state.phase, .idle)
+        XCTAssertEqual(workspace.videoExport.state.phase, .failed)
         XCTAssertEqual(deletedURLs, [temporaryURL])
     }
 

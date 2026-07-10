@@ -111,11 +111,11 @@ final class EditorWorkspaceRegistry {
                 return .canceled
             }
             defaultCloseGeneration = nil
-            request.workspace.discardTransientState()
             guard didFlushAutosaves else {
                 request.workspace.send(.autosaveRecoveryRequired)
                 return .autosaveFailed
             }
+            request.workspace.discardTransientState()
             if request.workspace.state.isAutosaveRecoveryPresented {
                 request.workspace.send(.autosaveRecoveryResolved("Saved"))
             }
@@ -126,13 +126,13 @@ final class EditorWorkspaceRegistry {
               workspacesBySessionID[sessionID] === request.workspace else {
             return .canceled
         }
-        request.workspace.discardTransientState()
         guard didFlushAutosaves else {
             closeGenerationBySessionID.removeValue(forKey: sessionID)
             markRecoverable(request)
             request.workspace.send(.autosaveRecoveryRequired)
             return .autosaveFailed
         }
+        request.workspace.discardTransientState()
         workspacesBySessionID.removeValue(forKey: sessionID)
         closeGenerationBySessionID.removeValue(forKey: sessionID)
         removeRecoveryRecord(for: sessionID)
