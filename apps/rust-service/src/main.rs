@@ -675,7 +675,7 @@ fn read_index(paths: &InternalPaths) -> Result<Vec<ProjectSummary>, String> {
 
 fn read_index_recovering_orphans(paths: &InternalPaths) -> Result<Vec<ProjectSummary>, String> {
     let _index_lock = DirectoryLock::acquire(paths.support_dir.join(".project-index.lock"))?;
-    let (mut projects, index_needs_repair, recover_all_project_files, primary_error) =
+    let (mut projects, recovered_from_backup, recover_all_project_files, primary_error) =
         match read_index(paths) {
             Ok(projects) => {
                 if project_index_backup_needs_sync(paths)
@@ -686,19 +686,30 @@ fn read_index_recovering_orphans(paths: &InternalPaths) -> Result<Vec<ProjectSum
                 (projects, false, false, None)
             }
             Err(primary_error) => match read_index_backup(paths) {
-                Ok(projects) => (projects, true, false, None),
-                Err(_) => (Vec::new(), true, true, Some(primary_error)),
+                // A backup write can fail after the authoritative primary commit. Treat any
+                // backup as a recovery hint, then reconcile it with tombstones and every valid
+                // project document before repairing the primary index.
+                Ok(projects) => (projects, true, true, Some(primary_error)),
+                Err(_) => (Vec::new(), false, true, Some(primary_error)),
             },
         };
-    let mut known_paths = projects
-        .iter()
-        .map(|project| project.path.clone())
-        .collect::<HashSet<_>>();
     let forgotten_paths = if recover_all_project_files {
         read_forgotten_project_paths(paths)?
     } else {
         HashSet::new()
     };
+    let mut removed_tombstoned_backup_entry = false;
+    if recovered_from_backup {
+        projects.retain(|project| {
+            let keep = !forgotten_paths.contains(&project_path_identity(Path::new(&project.path)));
+            removed_tombstoned_backup_entry |= !keep;
+            keep
+        });
+    }
+    let mut known_paths = projects
+        .iter()
+        .map(|project| project.path.clone())
+        .collect::<HashSet<_>>();
     let mut found_tombstoned_project = false;
     let mut recovered = Vec::new();
 
@@ -776,13 +787,11 @@ fn read_index_recovering_orphans(paths: &InternalPaths) -> Result<Vec<ProjectSum
         write_index(paths, &recovered)?;
         projects = recovered;
     } else if recover_all_project_files {
-        if found_tombstoned_project {
+        if recovered_from_backup || removed_tombstoned_backup_entry || found_tombstoned_project {
             write_index(paths, &projects)?;
         } else {
             return Err(primary_error.unwrap_or_else(|| "project index is unavailable".to_string()));
         }
-    } else if index_needs_repair {
-        write_index(paths, &projects)?;
     }
     Ok(projects)
 }
@@ -1556,6 +1565,62 @@ mod tests {
         let projects = read_index_recovering_orphans(&paths).unwrap();
 
         assert!(projects.is_empty());
+        assert!(project_path.exists());
+        assert!(read_index(&paths).unwrap().is_empty());
+    }
+
+    #[test]
+    fn stale_backup_recovery_finds_projects_added_after_the_backup_commit() {
+        let paths = test_paths("recover-project-added-after-stale-backup");
+        paths.ensure().unwrap();
+        let stale_backup = fs::read(project_index_backup_path(&paths)).unwrap();
+        let recording_path = paths.recordings_dir.join("recording.mp4");
+        fs::write(&recording_path, b"recording").unwrap();
+        let saved = save_project_document(
+            &paths,
+            "New Recording",
+            Some(recording_path.to_string_lossy().to_string()),
+            None,
+            Some("Display".to_string()),
+            default_timeline_editor_state(),
+            None,
+        )
+        .unwrap();
+        fs::write(project_index_backup_path(&paths), stale_backup).unwrap();
+        fs::write(&paths.project_index, b"corrupt primary").unwrap();
+
+        let recovered = read_index_recovering_orphans(&paths).unwrap();
+
+        assert_eq!(recovered.len(), 1);
+        assert_eq!(recovered[0].path, saved.path);
+        assert_eq!(read_index(&paths).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn stale_backup_recovery_does_not_restore_a_forgotten_project() {
+        let paths = test_paths("stale-backup-preserves-forget");
+        paths.ensure().unwrap();
+        let recording_path = paths.recordings_dir.join("recording.mp4");
+        fs::write(&recording_path, b"recording").unwrap();
+        let saved = save_project_document(
+            &paths,
+            "Forgotten Recording",
+            Some(recording_path.to_string_lossy().to_string()),
+            None,
+            Some("Display".to_string()),
+            default_timeline_editor_state(),
+            None,
+        )
+        .unwrap();
+        let project_path = PathBuf::from(&saved.path);
+        let stale_backup = fs::read(project_index_backup_path(&paths)).unwrap();
+        forget_project(&paths, &saved.path).unwrap();
+        fs::write(project_index_backup_path(&paths), stale_backup).unwrap();
+        fs::write(&paths.project_index, b"corrupt primary").unwrap();
+
+        let recovered = read_index_recovering_orphans(&paths).unwrap();
+
+        assert!(recovered.is_empty());
         assert!(project_path.exists());
         assert!(read_index(&paths).unwrap().is_empty());
     }
