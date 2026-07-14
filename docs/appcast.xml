@@ -457,5 +457,210 @@
 ]]></description>
             <enclosure url="https://github.com/imbhargav5/open-recorder/releases/download/v0.2.33/open-recorder-macos.zip" sparkle:edSignature="A7GcLSM2TH7JgfNxgLJRhv5nCeYSgCHAJhrQVL+I8naPRppDyJLog/JSw64pPrETwxlAuexB4iupW+VHYh8VAA==" length="41232693" type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 0.2.34</title>
+            <pubDate>Tue, 14 Jul 2026 07:23:34 GMT</pubDate>
+            <sparkle:version>0.2.34</sparkle:version>
+            <sparkle:shortVersionString>0.2.34</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+## Commits since v0.2.33
+
+- 65426a8 Merge pull request #994 from imbhargav5/codex/native-macos-ux-correctness
+- 7511a15 Merge pull request #993 from imbhargav5/codex/project-registry-durability
+- 79864a5 Reconcile stale project index backups
+- 2003672 Harden project registry durability
+- 70be4eb Improve native macOS recording workflows
+- 2539d59 Merge pull request #991 from imbhargav5/agent/consolidate-state-ownership
+- e055201 Preserve exports after failed editor close
+- ea5de7a Consolidate macOS state ownership
+- f399797 Merge pull request #989 from imbhargav5/automation/open-recorder-maint-20260701-thumbnail-comment-2
+- ef4f1f8 chore: clarify thumbnail source picker comment
+- 017eade Merge pull request #987 from imbhargav5/automation/open-recorder-maint-20260701-thumbnail-comment
+- 10c987c chore: clarify thumbnail cursor comment
+- 2f0258b Merge pull request #985 from imbhargav5/automation/open-recorder-maint-20260701-2
+- 1c57aa3 chore: type landing URLs
+- f3dcfed Merge pull request #983 from imbhargav5/automation/open-recorder-maint-20260701-readme
+- f187296 docs: remove stale README wording
+- 7c18c54 Merge pull request #981 from imbhargav5/automation/open-recorder-maint-20260701
+- 263c439 landing anchor scroll offset
+- 3613fb2 Merge pull request #977 from imbhargav5/codex/open-recorder-maint-20260701
+- b45638f chore: remove redundant autosave test annotations
+- ca1119a Merge pull request #975 from imbhargav5/automation/open-recorder-maint-20260630-remove-redundant-landing-url-types
+- be0cc50 chore: remove redundant landing url types
+- bfedacc Merge pull request #973 from imbhargav5/automation/open-recorder-maint-20260630-comment-clarify
+- 86ae104 chore: clarify landing eslint ignore comment
+- 558e7cc Merge pull request #971 from imbhargav5/automation/open-recorder-maint-20260630-8417a
+- 7462c76 docs: tighten landing page metadata
+- 008a474 Merge pull request #969 from imbhargav5/automation/open-recorder-maintainer-20260630-eslint-comment-fix
+- 0e92f4d chore: clarify landing eslint ignore comment
+- 8616fb5 Merge pull request #967 from imbhargav5/automation/open-recorder-maintainer-20260630-infer-map-types
+- e0b2992 chore: remove redundant landing map annotations
+- 78d99bd Merge pull request #965 from imbhargav5/codex/timeline-clip-speed-type
+- dcbc42e chore: annotate timeline clip speeds
+- 0e79bf1 Merge pull request #963 from imbhargav5/automation/open-recorder-maint-20260630-type-annotation-2
+- 4be1706 chore: add explicit type for blocklist prefixes
+- 89cbd45 Merge pull request #961 from imbhargav5/automation/open-recorder-maint-20260630-cursor-comment-fresh
+- 908d5de Clarify native recorder cursor comment
+- f539c1c Merge pull request #959 from imbhargav5/automation/open-recorder-maint-20260630-native-cursor-comment
+- 4da7e8e Clarify cursor capture comment
+- b2117ba Merge pull request #957 from imbhargav5/automation/open-recorder-maint-20260630-1
+- 4b14ba6 Merge branch 'main' into automation/open-recorder-maint-20260630-1
+- 72d3ef0 Fix ad-hoc signing plist cleanup
+- 91b6ae2 Merge pull request #955 from imbhargav5/automation/open-recorder-maint-20260630-followup
+- aeec531 Clarify cursor capture comment
+- 2600f6d Merge pull request #953 from imbhargav5/automation/open-recorder-maint-20260630-fresh
+- b53d78a Clarify recorder cursor comment
+- e596eea Merge pull request #951 from imbhargav5/codex/open-recorder-thumbnail-cursor-comment
+- 4f9a16a Clarify thumbnail cursor comment
+- 72f1ee6 Merge pull request #949 from imbhargav5/automation/open-recorder-maint-20260630-comment
+- 8e99d26 Clarify cursor recording comment
+- fe127be Merge pull request #947 from imbhargav5/codex/open-recorder-maint-20260630-cursor-comment-clarification
+- 6b544b4 Clarify recording cursor comment
+- 78e29d5 Merge pull request #945 from imbhargav5/automation/open-recorder-maint-20260630-cursor-overlay-comment
+- 196ffab Clarify thumbnail cursor comment
+- 3827fc7 Merge pull request #943 from imbhargav5/automation/open-recorder-maint-20260630-cursor-comment-2
+- 644e243 Clarify native cursor comment
+- 97b711b Merge pull request #941 from imbhargav5/codex/open-recorder-maint-20260630-timestamp-collision-fix
+- 16c4a27 Remove stale source picker comment
+- 8797d32 Merge pull request #939 from imbhargav5/automation/open-recorder-maint-20260630-timestamp-collision
+- bdb4319 Use millisecond precision for timestamped file names
+- 0cfce9e Merge pull request #937 from imbhargav5/automation/open-recorder-maint-20260630-millis
+- c45e880 Reduce project filename collisions
+- 843b6e6 Merge pull request #935 from imbhargav5/automation/open-recorder-maint-20260630-type-annotation
+- 9ce3709 Annotate compositor render closure
+- d2e41f1 Merge pull request #933 from imbhargav5/automation/open-recorder-maint-20260630-cursor-comment
+- 7035ceb Clarify native recorder cursor comment
+- 177223e Merge pull request #931 from imbhargav5/automation/open-recorder-maint-20260630-source-picker-comment
+- b9d1971 Merge branch 'main' into automation/open-recorder-maint-20260630-source-picker-comment
+- bb5d65c Clarify source picker fallback comment
+- 652b978 Merge pull request #929 from imbhargav5/automation/open-recorder-maint-20260630-eslint-comment
+- f20a920 Clarify landing ESLint comment
+- 36ee928 Merge pull request #927 from imbhargav5/codex/open-recorder-maint-20260630-landing-types
+- 6e77e86 Merge branch 'main' into codex/open-recorder-maint-20260630-landing-types
+- 5f0523f Add explicit landing render types
+- ecebcf6 Merge pull request #925 from imbhargav5/automation/open-recorder-maint-20260630-landing-types
+- d58cded Add explicit landing render types
+- e7d207a Merge pull request #923 from imbhargav5/codex/landing-eslint-ignore-comment
+- da1ec1e landing eslint comment
+- bf761f7 Merge pull request #921 from imbhargav5/codex/thumbnail-comment
+- bc70425 Tighten thumbnail cursor comment
+- c138fc0 Merge pull request #919 from imbhargav5/automation/open-recorder-maintainer-20260630-native-screen-recorder-error-description
+- c287225 Merge branch 'main' into automation/open-recorder-maintainer-20260630-native-screen-recorder-error-description
+- 0af0370 Clarify native recorder area error
+- 2c93299 Merge pull request #917 from imbhargav5/automation/open-recorder-maint-20260630-3f5a
+- c4ed5e6 Isolate screenshot renderer tests to the main actor
+- b51ab1e Merge pull request #915 from imbhargav5/automation/open-recorder-maintainer-20260630-eslint-comment
+- 329d1e2 Clarify landing ESLint ignore comment
+- 597cbb8 Merge pull request #913 from imbhargav5/codex/release-help-text-update
+- 137906e clarify release help text
+- 3144611 Merge pull request #911 from imbhargav5/automation/open-recorder-maintainer-20260630-type-tidy
+- 5c3e5c6 Merge branch 'main' into automation/open-recorder-maintainer-20260630-type-tidy
+- cb6ad77 Tighten update checker plist fixture type
+- 01a92a9 Merge pull request #909 from imbhargav5/automation/open-recorder-maintainer-20260630-docs
+- e4d4594 Document landing app install step
+- 9e639f3 Merge pull request #907 from imbhargav5/automation/open-recorder-maint-20260630-31
+- b0298fa Add explicit landing URL types
+- 0521cbc Merge pull request #905 from imbhargav5/automation/open-recorder-maint-20260630-5
+- bb4e296 Merge branch 'main' into automation/open-recorder-maint-20260630-5
+- 9f7fbc8 Clarify design token comment
+- d376dc7 Merge pull request #903 from imbhargav5/automation/open-recorder-maintainer-20260630-4
+- c246a31 Clarify screen capture cursor comment
+- e26a874 Merge pull request #901 from imbhargav5/automation/open-recorder-maintainer-20260630-3
+- 2f8ab53 Clarify thumbnail cursor comment
+- 8720e32 Merge pull request #899 from imbhargav5/automation/open-recorder-maintainer-20260630
+- ea20077 Clarify native cursor comment
+- 33c56a9 Merge pull request #897 from imbhargav5/automation/open-recorder-maint-20260630-2
+- 500b62e Clarify native cursor comment
+- 68fa9c7 Tighten inspector link types (#896)
+- 60de951 Merge pull request #894 from imbhargav5/automation/open-recorder-maint-20260630
+- 8a10af0 Clarify raw cursor comment
+- d10f40b Merge pull request #892 from imbhargav5/automation/open-recorder-maint-20260629-12
+- b16d88d Increase async test polling timeout
+- 84aa85d Merge pull request #890 from imbhargav5/automation/open-recorder-maint-20260629-11
+- 2d5ac8c Clarify design token comment
+- 9f37159 Merge pull request #888 from imbhargav5/automation/open-recorder-maintainer-20260629
+- dbe6def Clarify cursor capture comment
+- b532475 Merge pull request #886 from imbhargav5/automation/open-recorder-maint-20260629-10
+- c23f305 Clarify HUD gradient comment
+- f350166 Merge pull request #884 from imbhargav5/automation/open-recorder-maint-20260629-9
+- 15e8372 Merge branch 'main' into automation/open-recorder-maint-20260629-9
+- 2d6f4fb Clarify recording HUD comment
+- cf437aa Merge pull request #882 from imbhargav5/automation/open-recorder-maint-20260629-8
+- 7f90225 Clarify cursor capture comment
+- 6726ac7 Merge pull request #880 from imbhargav5/automation/open-recorder-maint-20260629-7
+- a7918a5 Fix screenshot index ordering
+- 86eefba Merge pull request #878 from imbhargav5/automation/open-recorder-maint-20260629-6
+- 58983a8 Merge branch 'main' into automation/open-recorder-maint-20260629-6
+- 2a6d8e0 Broaden update checker plist fixture type
+- 4c1f752 Merge pull request #876 from imbhargav5/automation/open-recorder-maint-20260629-5
+- 2aaeb55 chore: clarify recording HUD comment
+- 9832502 Merge pull request #874 from imbhargav5/maint/open-recorder
+- dec3780 Tighten update checker feed validation
+- 0ef37a6 Merge pull request #871 from imbhargav5/automation/open-recorder-maint-20260629-3
+- 84f740a Clarify recording HUD comment
+- 8f68561 Merge pull request #869 from imbhargav5/automation/open-recorder-maint-20260629-2
+- d91810c Tighten update checker plist test fixture
+- c6807f4 Merge pull request #867 from imbhargav5/codex/stabilize-test-polling
+- ba72781 Stabilize test polling
+- 62db7e9 Merge pull request #865 from imbhargav5/automation/open-recorder-maint-20260629
+- 98b80f4 Clarify recording HUD gradient comment
+- 6fd878b Merge pull request #863 from imbhargav5/codex/signing-temp-plist-scope
+- 00c0383 Merge branch 'main' into codex/signing-temp-plist-scope
+- 6dea00b scope signing temp plist
+- 0291644 Merge pull request #861 from imbhargav5/automation/open-recorder-maint-fresh
+- c9413d7 clarify cursor capture comment
+- 57164d8 Merge pull request #859 from imbhargav5/automation/open-recorder-maint-20260628-10
+- 17cab1b Clean up recorder config test comment
+- 8633a4e Merge pull request #857 from imbhargav5/automation/open-recorder-maint-20260628-9
+- cba7087 Merge branch 'main' into automation/open-recorder-maint-20260628-9
+- 65ccc27 Clarify microphone-disabled test comment
+- 6c37461 Merge pull request #855 from imbhargav5/automation/open-recorder-maint-20260628-8
+- e72381e Clarify cursor capture comment
+- 5c3e0e1 Merge pull request #853 from imbhargav5/automation/open-recorder-maint-20260628-7
+- 34bee2c clarify README wording
+- 333cb4f Merge pull request #851 from imbhargav5/automation/open-recorder-maint-20260628-6b
+- 3ad327d Clarify signing helper comment
+- 8740b16 Merge pull request #849 from imbhargav5/automation/open-recorder-maint-20260628-5
+- e691537 Merge branch 'main' into automation/open-recorder-maint-20260628-5
+- 0e2915a Clarify native cursor capture comment
+- edeeb57 Merge pull request #847 from imbhargav5/automation/open-recorder-maint-20260628-4
+- 28a4ca6 Clarify cursor capture comment
+- ab379e5 Merge pull request #845 from imbhargav5/automation/open-recorder-maint-20260628-3
+- 6db29fd Simplify landing docs link markup
+- 8bbfba3 Merge pull request #843 from imbhargav5/automation/open-recorder-maint-20260628-2
+- 7aacfa8 clarify landing eslint comments
+- 8ef6b9a Merge pull request #841 from imbhargav5/automation/open-recorder-maintainer
+- 9bb013f Update landing eslint comments
+- 669fe76 Merge pull request #839 from imbhargav5/codex/open-recorder-maint-20260628-7
+- b31ee91 Fix release dispatcher arg parsing
+- 7233705 Merge pull request #837 from imbhargav5/automation/open-recorder-maint-20260628-6
+- e476813 Reuse GitHub link URLs
+- 18bbb73 Merge pull request #835 from imbhargav5/codex/open-recorder-maint-20260628-5
+- 97be0ab Refactor compositor pixel buffer attributes
+- 1e68b47 Merge pull request #833 from imbhargav5/codex/open-recorder-maint-20260628-4
+- 0b26b51 Fix project missing media detection
+- 3b9feae Merge pull request #831 from imbhargav5/codex/open-recorder-maint-20260628-3
+- eb6acfc Approve landing build scripts
+- d4c5279 Merge pull request #829 from imbhargav5/codex/fix-landing-turbopack-root-warning
+- b7b9061 Fix landing turbopack root warning
+- 2516be2 Merge pull request #827 from imbhargav5/automation/open-recorder-maint-20260628
+- 92cab47 Open source links in new tab
+- 618314c Merge pull request #825 from imbhargav5/automation/open-recorder-maint-20260628-1
+- 0832035 Centralize export-ready status copy
+- a2cef49 Merge pull request #823 from imbhargav5/automation/open-recorder-maint-20260628-verified
+- c0f2a58 Centralize export save-cancel wording
+- 4cf4d6a Merge pull request #821 from imbhargav5/codex/open-recorder-maint-20260628-2
+- b79aaee Clarify export retry wording
+- 6ce47e0 Merge pull request #819 from imbhargav5/codex/app-presentation-state-machine-flake-fix
+- 01ed1e4 Stabilize capture driver start tests
+- a444149 Merge pull request #817 from imbhargav5/codex/open-recorder-maint-20260628-fresh
+- bdd3557 Align saveProject editor state fallback
+- 68bd143 Merge pull request #815 from imbhargav5/codex/open-recorder-maint-20260628
+- feb6cf0 Clarify native recorder cursor comment
+- 183d24c Update appcast for v0.2.33
+]]></description>
+            <enclosure url="https://github.com/imbhargav5/open-recorder/releases/download/v0.2.34/open-recorder-macos.zip" sparkle:edSignature="8f1Y5JkorXS47FRastGTdLSfpVEv9KffBjcMZZyoguaTb/9mczebXz9a/SI7KnTV575k1Q5SuU/8HddlITwABA==" length="42321874" type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
