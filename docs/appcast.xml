@@ -662,5 +662,21 @@
 ]]></description>
             <enclosure url="https://github.com/imbhargav5/open-recorder/releases/download/v0.2.34/open-recorder-macos.zip" sparkle:edSignature="8f1Y5JkorXS47FRastGTdLSfpVEv9KffBjcMZZyoguaTb/9mczebXz9a/SI7KnTV575k1Q5SuU/8HddlITwABA==" length="42321874" type="application/octet-stream"/>
         </item>
+        <item>
+            <title>Version 0.2.35</title>
+            <pubDate>Wed, 12 Aug 2026 10:58:13 GMT</pubDate>
+            <sparkle:version>0.2.35</sparkle:version>
+            <sparkle:shortVersionString>0.2.35</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+## Commits since v0.2.34
+
+- 9fd2c12 Merge pull request #1000 from imbhargav5/codex/unified-capture-hud
+- c19d154 Merge remote-tracking branch 'origin/main' into codex/unified-capture-hud
+- d8d2cbd Redesign capture setup flow
+- a11fa06 Update appcast for v0.2.34
+]]></description>
+            <enclosure url="https://github.com/imbhargav5/open-recorder/releases/download/v0.2.35/open-recorder-macos.zip" sparkle:edSignature="H+vub3VsLVWd+l3SYPAb3y7yT9Iops+8LbsedtZcWTGkUnYwPhGCiWORfgcQNRc7C9JH5YWvTDaZX5KqmwOxAg==" length="42312441" type="application/octet-stream"/>
+        </item>
     </channel>
 </rss>
