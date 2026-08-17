@@ -181,28 +181,30 @@ struct VideoPreviewPanel: View {
     }
 
     private var previewControlRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             cropButton
             Rectangle()
-                .fill(Theme.borderSubtle)
-                .frame(width: 1, height: 20)
+                .fill(Theme.borderStrong.opacity(0.50))
+                .frame(width: 1, height: 18)
             previewAspectMenu
         }
-        .padding(4)
-        .background(Theme.scrim.opacity(0.72), in: Capsule())
+        .padding(3)
+        .background(.ultraThinMaterial, in: Capsule())
+        .background(Theme.surface.opacity(0.82), in: Capsule())
         .overlay {
             Capsule()
-                .stroke(Theme.borderSubtle, lineWidth: 1)
+                .stroke(Theme.borderStrong.opacity(0.70), lineWidth: 1)
         }
+        .shadow(color: Color.black.opacity(0.24), radius: 8, y: 3)
     }
 
     private var cropButton: some View {
-        StudioButton(hitTarget: .capsule, help: "Crop", action: onCropVideo) {
+        StudioButton(hitTarget: .capsule, help: "Crop video", action: onCropVideo) {
             Label("Crop", systemImage: "crop")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color.primary.opacity(0.86))
-                .padding(.horizontal, 11)
-                .frame(height: 30)
+                .foregroundStyle(Theme.fg)
+                .padding(.horizontal, 12)
+                .frame(height: 28)
                 .background(Color.white.opacity(0.001), in: Capsule())
         }
     }
@@ -211,19 +213,19 @@ struct VideoPreviewPanel: View {
         StudioButton(hitTarget: .capsule, help: "Preview aspect ratio") {
             isPreviewAspectDropdownPresented.toggle()
         } label: {
-            HStack(spacing: 7) {
+            HStack(spacing: 6) {
                 PreviewAspectGlyph(preset: previewAspectPreset, isSelected: true)
-                    .frame(width: 17, height: 17)
+                    .frame(width: 15, height: 15)
                 Text(previewAspectPreset.ratioLabel)
+                    .font(.system(size: 11, weight: .semibold))
                     .lineLimit(1)
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(Color.primary.opacity(0.58))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(Theme.fgSubtle)
             }
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Color.primary.opacity(0.86))
-            .padding(.horizontal, 11)
-            .frame(height: 30)
+            .foregroundStyle(Theme.fg)
+            .padding(.horizontal, 12)
+            .frame(height: 28)
             .background(Color.white.opacity(0.001), in: Capsule())
         }
         .popover(isPresented: $isPreviewAspectDropdownPresented, arrowEdge: .top) {

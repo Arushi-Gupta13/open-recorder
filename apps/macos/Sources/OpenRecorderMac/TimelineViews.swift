@@ -359,21 +359,22 @@ private struct TimelineTimeDisplay: View {
     var duration: Double
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 4) {
             Text(formatPlaybackTime(currentTime))
-                .foregroundStyle(Theme.fg.opacity(0.90))
+                .foregroundStyle(Color.white)
             Text("/")
                 .foregroundStyle(Theme.fgSubtle)
             Text(formatPlaybackTime(duration))
                 .foregroundStyle(Theme.fgMuted)
         }
-        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-        .padding(.horizontal, 9)
+        .font(.system(size: 11, weight: .bold, design: .monospaced))
+        .monospacedDigit()
+        .padding(.horizontal, 10)
         .frame(height: 28)
-        .background(Theme.overlay.opacity(0.86), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .background(Theme.surfaceRaised.opacity(0.92), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .stroke(Theme.borderSubtle, lineWidth: 1)
+            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                .stroke(Theme.borderStrong.opacity(0.75), lineWidth: 1)
         }
         .accessibilityLabel("Playback time \(formatPlaybackTime(currentTime)) of \(formatPlaybackTime(duration))")
     }
@@ -902,9 +903,19 @@ struct TimelineClipRow: View {
 
     private func clipBody(segment: TimelineClipSegment, width: CGFloat, isSelected: Bool, isDeleted: Bool) -> some View {
         let foreground = isDeleted ? Color.white.opacity(0.48) : Theme.timelineClipForeground
-        return RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(isDeleted ? Color.secondary.opacity(isSelected ? 0.30 : 0.20) : Theme.timelineClip.opacity(isSelected ? 0.95 : 1))
-            .overlay { RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(isSelected ? Theme.timelineHandle.opacity(0.95) : (isDeleted ? Color.secondary.opacity(0.42) : Theme.timelineClipBorder), lineWidth: isSelected ? 2 : 1) }
+        return RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+            .fill(
+                isDeleted
+                    ? Color.secondary.opacity(isSelected ? 0.30 : 0.20)
+                    : (isSelected ? Theme.accent : Theme.timelineClip)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                    .stroke(
+                        isSelected ? Theme.timelineHandle : (isDeleted ? Color.secondary.opacity(0.42) : Theme.timelineClipBorder),
+                        lineWidth: isSelected ? 2 : 1
+                    )
+            }
             .overlay(alignment: .bottom) {
                 if let waveformSamples, !waveformSamples.isEmpty, !isDeleted {
                     TimelineWaveformPreview(samples: waveformSamples)
@@ -920,16 +931,16 @@ struct TimelineClipRow: View {
                         Label(isDeleted ? "Deleted" : "Clip \(segment.index + 1)", systemImage: isDeleted ? "trash" : "rectangle.on.rectangle")
                             .font(.system(size: 10, weight: .semibold))
                         Text("\(formatClipDuration(segment.end - segment.start)) @ \(TimelineClipSpeed.label(segment.speed))")
-                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
                     }
                     .foregroundStyle(foreground)
-                    .shadow(color: Theme.borderStrong, radius: 3, y: 1)
+                    .shadow(color: Color.black.opacity(0.35), radius: 3, y: 1)
                     .padding(.top, 11)
                     .allowsHitTesting(false)
                 }
             }
-            .overlay(alignment: .bottomLeading) { Text(formatPlaybackTime(segment.start)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.52)).padding(.leading, 9).padding(.bottom, 4) }
-            .overlay(alignment: .bottomTrailing) { Text(formatPlaybackTime(segment.end)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.52)).padding(.trailing, 9).padding(.bottom, 4) }
+            .overlay(alignment: .bottomLeading) { Text(formatPlaybackTime(segment.start)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.65)).padding(.leading, 9).padding(.bottom, 5) }
+            .overlay(alignment: .bottomTrailing) { Text(formatPlaybackTime(segment.end)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.65)).padding(.trailing, 9).padding(.bottom, 5) }
             .padding(.vertical, 5)
             .padding(.horizontal, 2)
     }
@@ -1385,9 +1396,9 @@ struct TimelineRegionItem: View {
     }
 
     private func regionBody(width: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
+        RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
             .fill(kind.accent.opacity(isSelected ? 0.55 : 0.34))
-            .overlay { RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(kind.accent.opacity(isSelected ? 0.95 : 0.65), lineWidth: isSelected ? 2 : 1) }
+            .overlay { RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous).stroke(kind.accent.opacity(isSelected ? 0.95 : 0.65), lineWidth: isSelected ? 2 : 1) }
             .overlay { regionLabel(width: width) }
             .overlay(alignment: .leading) {
                 if showsLeadingHandle {

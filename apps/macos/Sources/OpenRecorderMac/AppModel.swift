@@ -202,6 +202,7 @@ final class AppModel: ObservableObject {
     private var mediaImportRequestIDsByPath: [String: UUID] = [:]
     @Published private(set) var isCapturePreflightRunning = false
     @Published private(set) var isTerminationPending = false
+    @Published private(set) var activeRecordingStartDate: Date? = nil
     private var displayFlashWindows: [NSWindow] = []
     private let countdownOverlayController = RecordingCountdownOverlayController()
     private let captureUIHideDelayNanoseconds: UInt64
@@ -1351,6 +1352,7 @@ final class AppModel: ObservableObject {
             let screenStartedAt = try await startRecordingCapture(selectedSource, outputURL, options)
             cursorTelemetryRecorder.alignStart(to: screenStartedAt)
             activeScreenStartedAt = screenStartedAt
+            activeRecordingStartDate = screenStartedAt
 
             currentVideoURL = outputURL
             currentScreenshotURL = nil
@@ -1382,6 +1384,7 @@ final class AppModel: ObservableObject {
             }
             _ = cursorTelemetryRecorder.stop(videoURL: nil)
             activeScreenStartedAt = nil
+            activeRecordingStartDate = nil
             activeFacecamStartedAt = nil
             activeFacecamURL = nil
             restoreRecordingSetup(source: selectedSource, message: error.localizedDescription)
@@ -1464,6 +1467,7 @@ final class AppModel: ObservableObject {
             }
         }
         activeScreenStartedAt = nil
+        activeRecordingStartDate = nil
         activeFacecamStartedAt = nil
         activeFacecamURL = nil
     }

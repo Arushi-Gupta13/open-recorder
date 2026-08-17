@@ -44,22 +44,33 @@ struct BackgroundPickerView: View {
             .padding(.top, 18)
             .padding(.bottom, 17)
 
-            VStack(alignment: .leading, spacing: 9) {
-                HStack(spacing: 5) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 4) {
                     ForEach(availableKinds) { kind in
-                        StudioButton(hitTarget: .rounded(7), help: kind.title) {
+                        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: kind.title) {
                             activate(kind)
                         } label: {
                             Image(systemName: kind.symbolName)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: Theme.iconSm, weight: .semibold))
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 26)
-                                .background(activeKind == kind ? Theme.accent.opacity(0.92) : Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                .foregroundStyle(activeKind == kind ? Theme.accentFg : Theme.fgMuted)
+                                .frame(height: 28)
+                                .background(
+                                    activeKind == kind
+                                        ? Theme.accent
+                                        : Color.white.opacity(0.04),
+                                    in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                )
+                                .foregroundStyle(activeKind == kind ? Color.white : Theme.fgMuted)
                                 .overlay {
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .stroke(activeKind == kind ? Theme.accent.opacity(0.70) : Theme.borderSubtle, lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                        .stroke(
+                                            activeKind == kind
+                                                ? Theme.accent.opacity(0.80)
+                                                : Theme.borderSubtle,
+                                            lineWidth: 1
+                                        )
                                 }
+                                .shadow(color: activeKind == kind ? Theme.accent.opacity(0.30) : Color.clear, radius: 4, y: 1)
                         }
                     }
                 }
@@ -132,16 +143,21 @@ struct BackgroundPickerView: View {
     private var gradientGrid: some View {
         LazyVGrid(columns: fourColumnGridItems, spacing: tileSpacing) {
             ForEach(BackgroundPresets.gradients) { preset in
-                StudioButton(hitTarget: .rounded(7)) {
+                StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
                     selection = .gradient(preset)
                 } label: {
                     GradientSwatch(preset: preset)
                         .frame(maxWidth: .infinity)
                         .frame(height: tileHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: tileCornerRadius)
-                                .stroke(selectedGradientID == preset.id ? Theme.accent : Theme.border, lineWidth: selectedGradientID == preset.id ? 2 : 1)
+                            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                .stroke(
+                                    selectedGradientID == preset.id ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                    lineWidth: selectedGradientID == preset.id ? 2 : 1
+                                )
                         }
+                        .shadow(color: selectedGradientID == preset.id ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(preset.id.replacingOccurrences(of: "-", with: " ").capitalized)
             }
@@ -152,17 +168,21 @@ struct BackgroundPickerView: View {
         LazyVGrid(columns: fourColumnGridItems, spacing: tileSpacing) {
             ForEach(BackgroundPresets.solidColors.indices, id: \.self) { index in
                 let swatch = BackgroundPresets.solidColors[index]
-                StudioButton(hitTarget: .rounded(7)) {
+                StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
                     selection = .solid(swatch)
                 } label: {
-                    RoundedRectangle(cornerRadius: tileCornerRadius, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                         .fill(swatch.color)
                         .frame(maxWidth: .infinity)
                         .frame(height: tileHeight)
                         .overlay {
-                            RoundedRectangle(cornerRadius: tileCornerRadius, style: .continuous)
-                                .stroke(selectedColor == swatch ? Theme.accent : Theme.border, lineWidth: selectedColor == swatch ? 2 : 1)
+                            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                .stroke(
+                                    selectedColor == swatch ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                    lineWidth: selectedColor == swatch ? 2 : 1
+                                )
                         }
+                        .shadow(color: selectedColor == swatch ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(swatch.hexString)
             }
@@ -172,17 +192,21 @@ struct BackgroundPickerView: View {
     private var wallpaperGrid: some View {
         LazyVGrid(columns: fourColumnGridItems, spacing: tileSpacing) {
             ForEach(BackgroundPresets.wallpapers) { preset in
-                StudioButton(hitTarget: .rounded(7)) {
+                StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
                     selection = .wallpaper(preset)
                 } label: {
                     WallpaperThumbnail(preset: preset)
                         .frame(maxWidth: .infinity)
                         .frame(height: tileHeight)
-                        .clipShape(RoundedRectangle(cornerRadius: tileCornerRadius))
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: tileCornerRadius)
-                                .stroke(selectedWallpaperID == preset.id ? Theme.accent : Theme.border, lineWidth: selectedWallpaperID == preset.id ? 2 : 1)
+                            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                .stroke(
+                                    selectedWallpaperID == preset.id ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                    lineWidth: selectedWallpaperID == preset.id ? 2 : 1
+                                )
                         }
+                        .shadow(color: selectedWallpaperID == preset.id ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(preset.label)
             }
