@@ -900,19 +900,19 @@
 
 /* ─── WORKFLOW ────────────────────────────────────────────────────────────── */
 .rd-workflow {
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  position: relative;
 }
 
-.rd-workflow-inner {
+.rd-workflow-inner,
+.rd-arch-inner {
   display: grid;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: var(--sp-12);
   align-items: start;
 }
 
-.rd-workflow-copy {
+.rd-workflow-copy,
+.rd-arch-copy {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -921,11 +921,13 @@
   padding-top: 6px;
 }
 
-.rd-workflow-copy .rd-eyebrow {
+.rd-workflow-copy .rd-eyebrow,
+.rd-arch-copy .rd-eyebrow {
   margin-bottom: 0;
 }
 
-.rd-workflow-copy .rd-h2 {
+.rd-workflow-copy .rd-h2,
+.rd-arch-copy .rd-h2 {
   font-size: clamp(2rem, 3.2vw, 2.75rem);
   font-weight: 700;
   line-height: 1.18;
@@ -935,7 +937,8 @@
   margin: 0;
 }
 
-.rd-workflow-copy .rd-body {
+.rd-workflow-copy .rd-body,
+.rd-arch-copy .rd-body {
   font-size: 1rem;
   line-height: 1.65;
   color: var(--muted-foreground);
@@ -943,13 +946,22 @@
   margin: 0;
 }
 
-.rd-steps {
+.rd-steps,
+.rd-arch-panel {
   list-style: none;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  position: relative;
+  transition: box-shadow 300ms ease;
+}
+
+.rd-steps:hover,
+.rd-arch-panel:hover {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 25%, transparent),
+              0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
 .rd-step {
@@ -1009,22 +1021,6 @@
 }
 
 /* ─── ARCHITECTURE ────────────────────────────────────────────────────────── */
-.rd-arch-inner {
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: var(--sp-14);
-  align-items: start;
-}
-
-.rd-arch-copy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  position: sticky;
-  top: calc(var(--nav-height) + var(--sp-8));
-}
-.rd-arch-copy > .rd-eyebrow { margin-bottom: 0; }
-
 .rd-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1044,6 +1040,7 @@
   background: var(--muted);
   color: var(--muted-foreground);
   border: 1px solid var(--border);
+  border-radius: 6px;
   transition: border-color 200ms, color 200ms, background 200ms;
 }
 .rd-tag:hover {
@@ -1052,33 +1049,20 @@
   background: color-mix(in oklch, var(--primary) 8%, var(--muted));
 }
 
-.rd-arch-panel {
-  border: 1px solid var(--border);
-  background: var(--card);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  transition: box-shadow 300ms;
-}
-.rd-arch-panel:hover {
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 25%, transparent),
-              0 24px 60px rgba(0,0,0,0.45);
-}
-
 .rd-arch-row {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: 40px 36px;
-  border-left: 2px solid transparent;
+  gap: 8px;
+  padding: 26px 28px;
+  border-left: 3px solid transparent;
   position: relative;
-  transition: background 200ms, border-left-color 250ms var(--ease-out-quart);
+  transition: background 200ms ease, border-left-color 200ms ease;
 }
 .rd-arch-row:first-child {
   border-top: none;
 }
 .rd-arch-row + .rd-arch-row {
-  border-top: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  border-top: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
 }
 .rd-arch-row:hover {
   background: color-mix(in oklch, var(--primary) 5%, transparent);
@@ -1086,18 +1070,20 @@
 }
 
 .rd-arch-label {
-  font-size: 1.05rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--card-foreground);
   letter-spacing: -0.015em;
   line-height: 1.35;
+  margin: 0;
 }
 
 .rd-arch-value {
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   color: var(--muted-foreground);
-  line-height: 1.65;
+  line-height: 1.6;
   max-width: 520px;
+  margin: 0;
 }
 
 /* ─── CTA ─────────────────────────────────────────────────────────────────── */
