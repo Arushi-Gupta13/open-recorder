@@ -1,9 +1,10 @@
 import type { ReactElement } from "react";
+import { StepList } from "./StepList";
 
 const archRows = [
-  { label: "Swift app",    value: "Capture UI, editor timeline, screenshot composition, Finder integration" },
-  { label: "Rust service", value: "Project metadata, path handling, screenshot indexing, exports" },
-  { label: "Local paths",  value: "~/Movies/Open Recorder, ~/Pictures/Open Recorder, and local project files" },
+  { title: "Swift app",    description: "Capture UI, editor timeline, screenshot composition, Finder integration" },
+  { title: "Rust service", description: "Project metadata, path handling, screenshot indexing, exports" },
+  { title: "Local paths",  description: "~/Movies/Open Recorder, ~/Pictures/Open Recorder, and local project files" },
 ] as const;
 
 const tags = ["Swift 6", "Rust", "ScreenCaptureKit", "AVFoundation", "Apache 2.0"] as const;
@@ -26,14 +27,7 @@ export function RedesignArchitecture(): ReactElement {
           </div>
         </div>
 
-        <div className="rd-arch-panel" data-reveal="right">
-          {archRows.map((row, i) => (
-            <div className="rd-arch-row" key={row.label} style={{ transitionDelay: `${i * 60}ms` }}>
-              <span className="rd-arch-label">{row.label}</span>
-              <span className="rd-arch-value">{row.value}</span>
-            </div>
-          ))}
-        </div>
+        <StepList steps={archRows} />
       </div>
     </section>
   );
