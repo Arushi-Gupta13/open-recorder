@@ -9,13 +9,88 @@ struct CaptureHUD: View {
     @Environment(\.openWindow) private var openWindow
     var options: CaptureOptionsDriver
 
+    private var isRecordingActive: Bool {
+        model.capture.isRecording || model.recordingPhase == .recording
+    }
+
     var body: some View {
-        HUDSurface(isRecording: model.capture.isRecording) {
-            if model.captureMode == .recording {
+        HUDSurface(isRecording: isRecordingActive) {
+            if isRecordingActive {
+                activeRecordingControls
+            } else if model.captureMode == .recording {
                 recordingControls
             } else {
                 screenshotControls
             }
+        }
+        .animation(Theme.springSmooth, value: isRecordingActive)
+    }
+
+    private var activeRecordingControls: some View {
+        HStack(spacing: 8) {
+            DragHandle()
+
+            // Integrated Status Pill: Pulsing Dot + REC + Live Elapsed Time
+            HStack(spacing: 7) {
+                PulsingRecDot()
+                Text("REC")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.red)
+                LiveRecordingTimerView(startDate: model.activeRecordingStartDate)
+            }
+            .padding(.horizontal, 10)
+            .frame(height: Theme.btnHeightLg)
+            .background(Theme.scrim, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.borderSubtle, lineWidth: 1)
+            }
+
+            HUDDivider()
+
+            // Active Source Target
+            SourceChip(
+                source: model.captureState.source,
+                tone: .red,
+                minWidth: 110,
+                maxWidth: 200
+            )
+
+            // Audio & Mic Indicators (Modular, borderless)
+            if options.state.includeMicrophone || options.state.includeSystemAudio {
+                HStack(spacing: 6) {
+                    if options.state.includeMicrophone {
+                        HStack(spacing: 5) {
+                            Image(systemName: "mic.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color.green)
+                            AudioWaveformIndicator()
+                        }
+                        .padding(.horizontal, 8)
+                        .frame(height: Theme.btnHeightLg)
+                        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                        .help("Microphone is actively recording")
+                    }
+
+                    if options.state.includeSystemAudio {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: 28, height: Theme.btnHeightLg)
+                            .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                            .help("System audio is actively recording")
+                    }
+                }
+            }
+
+            HUDPrimaryButton(
+                title: "Stop",
+                symbolName: "stop.fill",
+                isDestructive: true,
+                shortcutText: nil
+            ) {
+                model.stopRecording()
+            }
+            .help(recordingShortcutHelpTitle)
         }
     }
 
@@ -33,7 +108,6 @@ struct CaptureHUD: View {
 
             HStack(spacing: 4) {
                 sourcePicker()
-                    .layoutPriority(2)
                 permissionControls
             }
 
@@ -46,10 +120,11 @@ struct CaptureHUD: View {
                     title: model.capture.isRecording ? "Stop" : startStopTitle,
                     symbolName: model.capture.isRecording ? "stop.fill" : "record.circle",
                     isDestructive: model.capture.isRecording,
-                    shortcutText: recordingShortcutText
+                    shortcutText: nil
                 ) {
                     toggleRecording()
                 }
+                .help(recordingShortcutHelpTitle)
                 .disabled(model.recordingPhase == .idle && !model.capture.isRecording && !captureReadiness.canCapture)
             }
         }
@@ -60,7 +135,7 @@ struct CaptureHUD: View {
             compactLeadingControls
 
             HStack(spacing: 4) {
-                sourcePicker(minWidth: 128, maxWidth: 172)
+                sourcePicker(minWidth: 115, maxWidth: 155)
                 compactPermissionControls
             }
 
@@ -71,10 +146,11 @@ struct CaptureHUD: View {
                     title: model.capture.isRecording ? "Stop" : startStopTitle,
                     symbolName: model.capture.isRecording ? "stop.fill" : "record.circle",
                     isDestructive: model.capture.isRecording,
-                    shortcutText: recordingShortcutText
+                    shortcutText: nil
                 ) {
                     toggleRecording()
                 }
+                .help(recordingShortcutHelpTitle)
                 .disabled(model.recordingPhase == .idle && !model.capture.isRecording && !captureReadiness.canCapture)
             }
         }
@@ -82,9 +158,15 @@ struct CaptureHUD: View {
 
     private var narrowRecordingControls: some View {
         HStack(spacing: 6) {
-            modePicker(width: 116)
+            HUDModeSwitcher(
+                mode: Binding(
+                    get: { model.captureMode },
+                    set: { model.beginCapture($0) }
+                ),
+                isDisabled: model.capture.isRecording || model.recordingPhase != .idle
+            )
 
-            sourcePicker(minWidth: 112, maxWidth: 134)
+            sourcePicker(minWidth: 100, maxWidth: 130)
 
             narrowCaptureOptionsMenu
 
@@ -152,7 +234,13 @@ struct CaptureHUD: View {
     private var sharedLeadingControls: some View {
         HStack(spacing: 8) {
             DragHandle()
-            modePicker(width: 158)
+            HUDModeSwitcher(
+                mode: Binding(
+                    get: { model.captureMode },
+                    set: { model.beginCapture($0) }
+                ),
+                isDisabled: model.capture.isRecording || model.recordingPhase != .idle
+            )
             HUDDivider()
         }
     }
@@ -160,30 +248,18 @@ struct CaptureHUD: View {
     private var compactLeadingControls: some View {
         HStack(spacing: 6) {
             DragHandle()
-            modePicker(width: 140)
+            HUDModeSwitcher(
+                mode: Binding(
+                    get: { model.captureMode },
+                    set: { model.beginCapture($0) }
+                ),
+                isDisabled: model.capture.isRecording || model.recordingPhase != .idle
+            )
         }
     }
 
-    private func modePicker(width: CGFloat) -> some View {
-        Picker("Capture Mode", selection: Binding(
-            get: { model.captureMode },
-            set: { model.beginCapture($0) }
-        )) {
-            Label("Record", systemImage: "record.circle")
-                .tag(CaptureMode.recording)
-            Label("Screenshot", systemImage: "camera")
-                .tag(CaptureMode.screenshot)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(width: width)
-        .disabled(model.capture.isRecording || model.recordingPhase != .idle)
-        .accessibilityLabel("Capture Mode")
-        .accessibilityValue(model.captureMode.title)
-    }
-
-    private func sourcePicker(minWidth: CGFloat = 132, maxWidth: CGFloat = 198) -> some View {
-        StudioButton(hitTarget: .capsule, help: "Choose Source") {
+    private func sourcePicker(minWidth: CGFloat = 120, maxWidth: CGFloat = 175) -> some View {
+        StudioButton(hitTarget: .rounded(8), help: "Choose Source") {
             model.requestSourceSelector()
         } label: {
             SourceChip(source: model.selectedSource, tone: sourceChipTone, minWidth: minWidth, maxWidth: maxWidth)
@@ -358,7 +434,7 @@ struct CaptureHUD: View {
                     openCameraSelector()
                 }
             case .chooseSource, .drawArea, .waitForCurrentCapture:
-                CaptureStatusChip(message: blocker.message, isError: true)
+                EmptyView()
             }
         } else if let captureStatusMessage {
             CaptureStatusChip(message: captureStatusMessage, isError: false)
@@ -368,8 +444,13 @@ struct CaptureHUD: View {
     @ViewBuilder
     private var compactPermissionControls: some View {
         if let blocker = captureReadiness.primaryBlocker {
-            HUDIconActionButton(symbolName: "exclamationmark.triangle.fill", title: blocker.message, tint: .red) {
-                performRecovery(for: blocker)
+            switch blocker.recoveryAction {
+            case .chooseSource, .drawArea, .waitForCurrentCapture:
+                EmptyView()
+            default:
+                HUDIconActionButton(symbolName: "exclamationmark.triangle.fill", title: blocker.message, tint: .red) {
+                    performRecovery(for: blocker)
+                }
             }
         } else if let captureStatusMessage {
             CaptureStatusChip(message: captureStatusMessage, isError: false, maxWidth: 96)
@@ -396,7 +477,7 @@ struct CaptureHUD: View {
             return "Starting..."
         }
         if message.localizedCaseInsensitiveContains("choose") {
-            return "Choose source"
+            return nil
         }
         return message
     }
@@ -483,5 +564,62 @@ struct CaptureHUD: View {
     private func openCameraSelector() {
         model.requestCameraSelection()
         openWindow(id: "camera-selector")
+    }
+}
+
+private struct PulsingRecDot: View {
+    var body: some View {
+        Circle()
+            .fill(Color.red)
+            .frame(width: 8, height: 8)
+            .shadow(color: Color.red.opacity(0.8), radius: 3)
+    }
+}
+
+private struct LiveRecordingTimerView: View {
+    var startDate: Date?
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1.0)) { context in
+            Text(formattedDuration(for: context.date))
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundStyle(Color.white)
+                .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 46, alignment: .leading)
+        }
+    }
+
+    private func formattedDuration(for currentDate: Date) -> String {
+        guard let startDate else { return "00:00" }
+        let totalSeconds = max(0, Int(currentDate.timeIntervalSince(startDate)))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
+}
+
+private struct AudioWaveformIndicator: View {
+    var body: some View {
+        HStack(spacing: 2) {
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 6)
+
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 10)
+
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 7)
+        }
+        .frame(height: 12)
     }
 }

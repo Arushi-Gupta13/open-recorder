@@ -144,11 +144,16 @@ struct SettingsInspector: View {
     }
 
     private var inspectorHeader: some View {
-        Text(activeTab.title)
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.fg.opacity(0.96))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 18)
+        HStack(spacing: 8) {
+            Image(systemName: activeTab.symbolName)
+                .font(.system(size: Theme.iconMd, weight: .semibold))
+                .foregroundStyle(Theme.accent)
+            Text(activeTab.title)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Color.white)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 16)
     }
 
     private var inspectorFooter: some View {
@@ -161,7 +166,7 @@ struct SettingsInspector: View {
             }
         }
         .padding(12)
-        .background(Theme.appBgMuted.opacity(0.38))
+        .background(Theme.surface.opacity(0.60))
     }
 
     @ViewBuilder
@@ -262,21 +267,25 @@ struct InspectorRailButton: View {
 
     var body: some View {
         Button(action: action) {
-            ZStack(alignment: .bottom) {
-                Image(systemName: tab.symbolName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(width: size, height: size)
-                    .foregroundStyle(isActive ? Theme.accent : Theme.fg.opacity(0.86))
-                    .background(isHovering ? Color.white.opacity(0.075) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            ZStack {
+                if isActive {
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                        .fill(Theme.accent.opacity(0.18))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                                .stroke(Theme.accent.opacity(0.40), lineWidth: 1)
+                        }
+                } else if isHovering {
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                }
 
-                Capsule()
-                    .fill(Theme.accent)
-                    .frame(width: 14, height: 2.5)
-                    .opacity(isActive ? 1 : 0)
-                    .offset(y: 1)
+                Image(systemName: tab.symbolName)
+                    .font(.system(size: Theme.iconMd, weight: isActive ? .bold : .semibold))
+                    .foregroundStyle(isActive ? Theme.accent : Theme.fgMuted)
             }
             .frame(width: size, height: size)
-            .roundedHitTarget(12)
+            .roundedHitTarget(Theme.radiusMd)
             .animation(.snappy(duration: 0.14), value: isHovering)
             .animation(.snappy(duration: 0.18), value: isActive)
         }
@@ -304,9 +313,9 @@ struct InspectorRailTooltip: View {
             .multilineTextAlignment(.trailing)
             .padding(.horizontal, 9)
             .frame(height: 28)
-            .background(Theme.surfaceRaised.opacity(0.96), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .background(Theme.surfaceRaised.opacity(0.96), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                     .stroke(Theme.borderStrong.opacity(0.72), lineWidth: 1)
             }
             .shadow(color: Color.black.opacity(0.28), radius: 10, y: 5)
@@ -318,19 +327,30 @@ struct InspectorFooterButton: View {
     var title: String
     var symbolName: String
     var action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(7), action: action) {
-            Label(title, systemImage: symbolName)
-                .font(.system(size: 10, weight: .medium))
-                .frame(maxWidth: .infinity)
-                .frame(height: 30)
-                .foregroundStyle(Theme.fgMuted)
-                .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(Theme.borderSubtle, lineWidth: 1)
-                }
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: symbolName)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: Theme.btnHeightSm)
+            .foregroundStyle(isHovering ? Color.white : Theme.fgMuted)
+            .background(
+                isHovering ? Color.white.opacity(0.08) : Theme.overlay,
+                in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                    .stroke(isHovering ? Theme.borderStrong : Theme.borderSubtle, lineWidth: 1)
+            }
+        }
+        .onHover { hovering in
+            isHovering = hovering
         }
     }
 }
@@ -503,9 +523,9 @@ struct InspectorSlider: View {
             .frame(width: inputWidth)
             .frame(height: 22)
             .padding(.horizontal, 5)
-            .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                     .stroke(isInputFocused ? Theme.accent.opacity(0.65) : Theme.borderSubtle, lineWidth: 1)
             }
             .onSubmit(commitDraftValue)
@@ -927,7 +947,7 @@ struct CursorStyleButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(7), help: style.title, action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), help: style.title, action: action) {
             VStack(spacing: 5) {
                 CursorGlyphView(styleID: style.id, scale: 0.56)
                     .frame(width: 38, height: 34)
@@ -939,9 +959,9 @@ struct CursorStyleButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.86))
-            .background(isSelected ? Theme.accent.opacity(0.82) : Theme.overlay, in: RoundedRectangle(cornerRadius: 7))
+            .background(isSelected ? Theme.accent.opacity(0.82) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(isSelected ? Theme.accent.opacity(0.95) : Theme.overlay)
             }
         }
@@ -976,14 +996,14 @@ struct PositionGrid: View {
                 .foregroundStyle(.secondary)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 3), spacing: 5) {
                 ForEach(FacecamAnchor.allCases) { anchor in
-                    StudioButton(hitTarget: .rounded(5), help: anchor.title) {
+                    StudioButton(hitTarget: .rounded(Theme.radiusSm), help: anchor.title) {
                         selection = anchor.rawValue
                     } label: {
-                        RoundedRectangle(cornerRadius: 5)
+                        RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                             .fill(isSelected(anchor) ? Theme.accent.opacity(0.28) : Theme.overlay)
                             .frame(height: 28)
                             .overlay {
-                                RoundedRectangle(cornerRadius: 5)
+                                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                                     .stroke(isSelected(anchor) ? Theme.accent.opacity(0.5) : Theme.overlay)
                             }
                     }
