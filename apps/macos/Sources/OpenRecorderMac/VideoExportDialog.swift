@@ -101,9 +101,9 @@ struct VideoExportDialog: View {
             }
         }
         .padding(Theme.space4)
-        .background(Theme.overlay.opacity(0.82), in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
+        .background(Theme.overlay.opacity(0.82), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderSubtle, lineWidth: 1)
         }
     }
@@ -141,9 +141,9 @@ struct VideoExportDialog: View {
                     .tint(Theme.accent)
             }
             .padding(Theme.space4)
-            .background(Theme.surfaceRaised.opacity(0.86), in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
+            .background(Theme.surfaceRaised.opacity(0.86), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(Theme.borderSubtle)
             }
 
@@ -234,9 +234,9 @@ struct VideoExportDialog: View {
                 movieSettings
             }
         }
-        .background(Theme.surfaceRaised.opacity(0.82), in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
+        .background(Theme.surfaceRaised.opacity(0.82), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderStrong.opacity(0.56))
         }
     }
@@ -462,7 +462,7 @@ private struct ExportPickerSettingRow<Option: Hashable & Identifiable>: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 30, height: 30)
-                .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(Theme.accent.opacity(0.10), in: Rectangle())
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -504,7 +504,7 @@ private struct ExportStaticSettingRow: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 30, height: 30)
-                .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(Theme.accent.opacity(0.10), in: Rectangle())
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -546,7 +546,7 @@ private struct ExportToggleSettingRow: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 30, height: 30)
-                .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(Theme.accent.opacity(0.10), in: Rectangle())
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
@@ -689,7 +689,7 @@ private struct ExportMessageRow: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 24, height: 24)
-                .background(tint.opacity(0.12), in: Circle())
+                .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
             Text(message)
                 .font(.system(size: 12))
                 .foregroundStyle(.primary)

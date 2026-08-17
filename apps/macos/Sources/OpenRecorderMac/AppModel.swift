@@ -2578,7 +2578,7 @@ final class AppModel: ObservableObject {
 private struct DisplayFlashOverlay: View {
     var body: some View {
         let flashColor = Theme.accent
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
+        Rectangle()
             .stroke(flashColor, lineWidth: 6)
             .padding(10)
             .background(flashColor.opacity(0.10))

@@ -66,31 +66,11 @@ extension View {
 
     @ViewBuilder
     func studioEditorPaneChrome(clipContent: Bool = true) -> some View {
-        let chrome = background {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Theme.surface.opacity(0.88))
-                    .overlay {
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.055),
-                                Color.white.opacity(0.012),
-                                Color.black.opacity(0.045)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-            }
+        background(Theme.surface.opacity(0.88))
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Theme.borderStrong.opacity(0.72), lineWidth: 1)
+                Rectangle()
+                    .stroke(Theme.borderStrong.opacity(0.44), lineWidth: 0.5)
             }
-
-        if clipContent {
-            chrome.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        } else {
-            chrome
-        }
     }
 
     @ViewBuilder
@@ -617,10 +597,10 @@ struct HUDSurface<Content: View>: View {
             .padding(.vertical, 7)
             .background {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                         .fill(.ultraThinMaterial)
 
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [Theme.surfaceRaised.opacity(0.94), Theme.appBg.opacity(0.96)],
@@ -629,7 +609,7 @@ struct HUDSurface<Content: View>: View {
                             )
                         )
 
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                         .strokeBorder(
                             LinearGradient(
                                 colors: [Color.white.opacity(0.21), Theme.borderStrong.opacity(0.18), Color.black.opacity(0.20)],
@@ -640,6 +620,7 @@ struct HUDSurface<Content: View>: View {
                         )
                 }
             }
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
             .shadow(color: Color.black.opacity(0.28), radius: 12, y: 6)
     }
 }
@@ -649,17 +630,17 @@ struct DragHandle: View {
         VStack(spacing: 3) {
             ForEach(0..<3, id: \.self) { _ in
                 HStack(spacing: 3) {
-                    Circle()
+                    Rectangle()
                         .fill(Color.white.opacity(0.30))
                         .frame(width: 3.5, height: 3.5)
-                    Circle()
+                    Rectangle()
                         .fill(Color.white.opacity(0.22))
                         .frame(width: 3.5, height: 3.5)
                 }
             }
         }
         .frame(width: 28, height: 36)
-        .background(Color.white.opacity(0.001), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .background(Color.white.opacity(0.001), in: Rectangle())
         .accessibilityLabel("Drag")
     }
 }
@@ -691,7 +672,7 @@ struct HUDPrimaryButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(8), action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), action: action) {
             HStack(alignment: .center, spacing: 6) {
                 Image(systemName: symbolName)
                     .font(.system(size: 13, weight: .bold))
@@ -702,19 +683,19 @@ struct HUDPrimaryButton: View {
 
                 if let shortcutText {
                     Text(shortcutText)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .padding(.horizontal, 5)
                         .frame(height: 18)
-                        .background((isDestructive ? Theme.destructiveFg : Theme.actionPrimaryFg).opacity(0.16), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+                        .background((isDestructive ? Theme.destructiveFg : Theme.actionPrimaryFg).opacity(0.16), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                 }
             }
             .fixedSize(horizontal: true, vertical: false)
             .frame(height: Theme.btnHeightLg)
             .padding(.horizontal, 14)
-            .background(isDestructive ? Theme.destructive : Theme.actionPrimary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(isDestructive ? Theme.destructive : Theme.actionPrimary, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .foregroundStyle(isDestructive ? Theme.destructiveFg : Theme.actionPrimaryFg)
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(Color.white.opacity(isDestructive ? 0.18 : 0.36), lineWidth: 1)
             }
             .shadow(color: (isDestructive ? Theme.destructive : Theme.actionPrimary).opacity(0.24), radius: 8, y: 2)
@@ -730,14 +711,14 @@ struct HUDPrimaryIconButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(8), help: title, action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), help: title, action: action) {
             Image(systemName: symbolName)
                 .font(.system(size: 14, weight: .semibold))
                 .frame(width: Theme.btnHeightLg, height: Theme.btnHeightLg)
-                .background(isDestructive ? Theme.destructive : Theme.actionPrimary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(isDestructive ? Theme.destructive : Theme.actionPrimary, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
                 .foregroundStyle(isDestructive ? Theme.destructiveFg : Theme.actionPrimaryFg)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                         .stroke(Color.white.opacity(isDestructive ? 0.18 : 0.36), lineWidth: 1)
                 }
                 .shadow(color: (isDestructive ? Theme.destructive : Theme.actionPrimary).opacity(0.24), radius: 8, y: 2)
@@ -752,14 +733,14 @@ struct HUDIconActionButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .circle, help: title, action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), help: title, action: action) {
             Image(systemName: symbolName)
                 .font(.system(size: 13, weight: .semibold))
                 .frame(width: Theme.btnHeightLg, height: Theme.btnHeightLg)
                 .foregroundStyle(tint.opacity(0.95))
-                .background(tint.opacity(0.14), in: Circle())
+                .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
                 .overlay {
-                    Circle()
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                         .stroke(tint.opacity(0.28), lineWidth: 1)
                 }
         }
@@ -778,22 +759,22 @@ struct HUDPermissionGroup: View {
                 .foregroundStyle(Theme.statusError.opacity(0.95))
                 .padding(.leading, 10)
 
-            StudioButton(hitTarget: .rounded(6), action: action) {
+            StudioButton(hitTarget: .rounded(Theme.radiusSm), action: action) {
                 Text("Settings")
                     .font(.system(size: 11, weight: .semibold))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Theme.statusError.opacity(0.18), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .background(Theme.statusError.opacity(0.18), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                     .foregroundStyle(Theme.statusError.opacity(0.95))
             }
         }
         .frame(height: Theme.btnHeightLg)
         .padding(.trailing, 4)
-        .background(Theme.statusError.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Theme.statusError.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.statusError.opacity(0.25), lineWidth: 1)
         }
     }
@@ -817,16 +798,16 @@ struct HUDModeSwitcher: View {
             )
         }
         .padding(3)
-        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderSubtle, lineWidth: 1)
         }
     }
 
     private func modeButton(mode targetMode: CaptureMode, symbolName: String, help: String) -> some View {
         let isSelected = mode == targetMode
-        return StudioButton(hitTarget: .rounded(6), help: help) {
+        return StudioButton(hitTarget: .rounded(Theme.radiusSm), help: help) {
             withAnimation(Theme.springFast) {
                 mode = targetMode
             }
@@ -837,11 +818,11 @@ struct HUDModeSwitcher: View {
                 .foregroundStyle(isSelected ? Color.white : Theme.fgMuted)
                 .background(
                     isSelected ? Theme.accent : Color.clear,
-                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                 )
                 .overlay {
                     if isSelected {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                             .stroke(Theme.accent.opacity(0.8), lineWidth: 1)
                     }
                 }
@@ -858,12 +839,12 @@ struct CaptureModeButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(8), action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), action: action) {
             HStack(spacing: 8) {
                 Image(systemName: symbolName)
                     .font(.system(size: 13, weight: .semibold))
                     .frame(width: 22, height: 22)
-                    .background(isActive ? Color.black.opacity(0.08) : Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    .background(isActive ? Color.black.opacity(0.08) : Color.white.opacity(0.055), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
@@ -874,7 +855,7 @@ struct CaptureModeButton: View {
             .padding(.horizontal, 12)
             .foregroundStyle(isActive ? Theme.actionPrimaryFg : Color.white.opacity(0.78))
             .background {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .fill(isActive ? Theme.actionPrimary : Theme.overlayStrong)
                     .overlay {
                         LinearGradient(
@@ -882,11 +863,11 @@ struct CaptureModeButton: View {
                             startPoint: .top,
                             endPoint: .bottom
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
                     }
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(isActive ? Color.white.opacity(0.24) : Theme.borderStrong.opacity(0.68), lineWidth: 1)
             }
         }
@@ -910,7 +891,7 @@ struct FlowLabel: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(dotColor)
                 .frame(width: 24, height: 24)
-                .background(dotColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .background(dotColor.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
             VStack(alignment: .leading, spacing: 1) {
                 Text(label.uppercased())
                     .font(.system(size: 9, weight: .bold))
@@ -925,9 +906,9 @@ struct FlowLabel: View {
         .frame(width: 112, alignment: .leading)
         .padding(.horizontal, 9)
         .frame(height: Theme.btnHeightLg)
-        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderSubtle, lineWidth: 1)
         }
     }
@@ -958,9 +939,9 @@ struct CompactFlowLabel: View {
         .frame(width: 82, alignment: .leading)
         .padding(.horizontal, 8)
         .frame(height: Theme.btnHeightLg)
-        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Theme.scrim, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderSubtle, lineWidth: 1)
         }
     }
@@ -972,8 +953,8 @@ struct StatusDot: View {
     var body: some View {
         Circle()
             .fill(dotColor)
-            .frame(width: 8, height: 8)
-            .shadow(color: dotColor.opacity(0.65), radius: 7)
+            .frame(width: 7, height: 7)
+            .shadow(color: dotColor.opacity(0.65), radius: 4)
     }
 
     private var dotColor: Color {
@@ -999,7 +980,7 @@ struct SourceChip: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.fg)
                 .frame(width: 22, height: 22)
-                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
             Text(source?.name ?? "Source")
                 .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
@@ -1012,12 +993,12 @@ struct SourceChip: View {
         .padding(.horizontal, 10)
         .frame(minWidth: minWidth, maxWidth: maxWidth, alignment: .leading)
         .frame(height: Theme.btnHeightLg)
-        .background(Theme.scrim.opacity(0.92), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Theme.scrim.opacity(0.92), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .stroke(Theme.borderStrong.opacity(0.62), lineWidth: 1)
         }
-        .roundedHitTarget(8)
+        .roundedHitTarget(Theme.radiusMd)
     }
 }
 
@@ -1106,11 +1087,11 @@ struct HUDToggle: View {
 // Prefer these over raw Color.white.opacity(N) or Color(red:...) literals.
 
 enum Theme {
-    // Corner Radii
-    static let radiusSm: CGFloat   = 6
-    static let radiusMd: CGFloat   = 10
-    static let radiusLg: CGFloat   = 14
-    static let radiusXl: CGFloat   = 18
+    // Corner Radii (Linear & Shadcn standard)
+    static let radiusSm: CGFloat   = 5
+    static let radiusMd: CGFloat   = 8
+    static let radiusLg: CGFloat   = 10
+    static let radiusXl: CGFloat   = 14
     static let radiusPill: CGFloat = 999
 
     // Spacing

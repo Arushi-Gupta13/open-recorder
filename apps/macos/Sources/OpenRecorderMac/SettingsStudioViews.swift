@@ -104,9 +104,9 @@ private struct SettingsZoomPresetPicker: View {
         .foregroundStyle(Theme.fgMuted)
         .accessibilityHint("Controls the timing and motion used for automatically created zooms")
         .padding(10)
-        .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
+        .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                 .stroke(Theme.overlay)
         }
     }

@@ -34,15 +34,15 @@ struct CaptureHUD: View {
             HStack(spacing: 7) {
                 PulsingRecDot()
                 Text("REC")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color.red)
                 LiveRecordingTimerView(startDate: model.activeRecordingStartDate)
             }
             .padding(.horizontal, 10)
             .frame(height: Theme.btnHeightLg)
-            .background(Theme.scrim, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(Theme.scrim, in: Rectangle())
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.borderSubtle, lineWidth: 1)
+                Rectangle().stroke(Theme.borderSubtle, lineWidth: 1)
             }
 
             HUDDivider()
@@ -67,7 +67,7 @@ struct CaptureHUD: View {
                         }
                         .padding(.horizontal, 8)
                         .frame(height: Theme.btnHeightLg)
-                        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                        .background(Color.green.opacity(0.12), in: Rectangle())
                         .help("Microphone is actively recording")
                     }
 
@@ -76,7 +76,7 @@ struct CaptureHUD: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Theme.accent)
                             .frame(width: 28, height: Theme.btnHeightLg)
-                            .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                            .background(Theme.accent.opacity(0.12), in: Rectangle())
                             .help("System audio is actively recording")
                     }
                 }
@@ -351,7 +351,7 @@ struct CaptureHUD: View {
     }
 
     private var narrowCaptureOptionsMenu: some View {
-        StudioMenu(hitTarget: .circle, help: "Capture Options") {
+        StudioMenu(hitTarget: .rectangle, help: "Capture Options") {
             Button(options.state.includeSystemAudio ? "Turn Off System Audio" : "Turn On System Audio") {
                 model.toggleSystemAudio()
             }
@@ -363,9 +363,9 @@ struct CaptureHUD: View {
                 .font(.system(size: 14, weight: .medium))
                 .frame(width: 38, height: 38)
                 .foregroundStyle(Color.white.opacity(0.70))
-                .background(Theme.overlay, in: Circle())
+                .background(Theme.overlay, in: Rectangle())
                 .overlay {
-                    Circle()
+                    Rectangle()
                         .stroke(Theme.border, lineWidth: 1)
                 }
         }
@@ -608,15 +608,15 @@ private struct LiveRecordingTimerView: View {
 private struct AudioWaveformIndicator: View {
     var body: some View {
         HStack(spacing: 2) {
-            RoundedRectangle(cornerRadius: 1)
+            Rectangle()
                 .fill(Color.green)
                 .frame(width: 2, height: 6)
 
-            RoundedRectangle(cornerRadius: 1)
+            Rectangle()
                 .fill(Color.green)
                 .frame(width: 2, height: 10)
 
-            RoundedRectangle(cornerRadius: 1)
+            Rectangle()
                 .fill(Color.green)
                 .frame(width: 2, height: 7)
         }

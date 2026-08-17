@@ -237,7 +237,7 @@ private struct WorkspaceAutosaveFailureBanner: View {
 
             Spacer(minLength: 12)
 
-            StudioButton(hitTarget: .rounded(7), action: retry) {
+            StudioButton(hitTarget: .rectangle, action: retry) {
                 HStack(spacing: 6) {
                     if isRetrying {
                         ProgressView()
@@ -250,7 +250,7 @@ private struct WorkspaceAutosaveFailureBanner: View {
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Theme.overlayStrong, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(Theme.overlayStrong, in: Rectangle())
             }
             .disabled(isRetrying)
         }
@@ -274,7 +274,7 @@ struct StudioNavBar: View {
     private let items: [AppSection] = [.editor, .projects]
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 12) {
             ForEach(items) { section in
                 StudioNavButton(
                     title: section.title,
@@ -287,19 +287,15 @@ struct StudioNavBar: View {
 
             Rectangle()
                 .fill(Theme.borderStrong.opacity(0.40))
-                .frame(width: 1, height: 18)
+                .frame(width: 1, height: 14)
                 .padding(.horizontal, 2)
 
             StudioIconNavButton(title: "Keyboard Shortcuts", symbolName: "questionmark") {
                 onToggleHelp()
             }
         }
-        .padding(3)
-        .background(Theme.surface.opacity(0.85), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                .stroke(Theme.borderStrong.opacity(0.70), lineWidth: 1)
-        }
+        .padding(.horizontal, 4)
+        .frame(height: 32)
     }
 
     private func navSymbol(for section: AppSection) -> String {
@@ -320,37 +316,21 @@ struct StudioNavButton: View {
     @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: title, action: action) {
+        Button(action: action) {
             HStack(spacing: 6) {
                 Image(systemName: symbolName)
-                    .font(.system(size: Theme.iconSm, weight: .semibold))
+                    .font(.system(size: Theme.iconSm, weight: isActive ? .semibold : .medium))
                     .frame(width: 16, height: 16)
                 Text(title)
-                    .font(.system(size: 12, weight: isActive ? .semibold : .medium))
+                    .font(.system(size: 13, weight: isActive ? .semibold : .medium))
                     .lineLimit(1)
             }
-            .frame(height: 28)
-            .padding(.horizontal, 10)
-            .foregroundStyle(isActive ? Color.white : Theme.fgMuted)
-            .background {
-                if isActive {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                        .fill(Theme.accent)
-                        .overlay {
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.18), Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-                        }
-                        .shadow(color: Theme.accent.opacity(0.32), radius: 6, y: 2)
-                } else if isHovering {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
-                }
-            }
+            .foregroundStyle(isActive ? Theme.accent : (isHovering ? Color.white : Theme.fgMuted))
+            .animation(.snappy(duration: 0.16), value: isHovering)
+            .animation(.snappy(duration: 0.18), value: isActive)
         }
+        .buttonStyle(.plain)
+        .help(title)
         .onHover { hovering in
             isHovering = hovering
         }
@@ -364,13 +344,14 @@ struct StudioIconNavButton: View {
     @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: title, action: action) {
+        Button(action: action) {
             Image(systemName: symbolName)
                 .font(.system(size: 11, weight: .bold))
-                .frame(width: 26, height: 28)
-                .foregroundStyle(Theme.fgMuted)
-                .background(isHovering ? Color.white.opacity(0.06) : Color.clear, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .foregroundStyle(isHovering ? Color.white : Theme.fgMuted)
+                .frame(width: 22, height: 22)
         }
+        .buttonStyle(.plain)
+        .help(title)
         .onHover { hovering in
             isHovering = hovering
         }
@@ -384,14 +365,14 @@ struct EditorHistoryButton: View {
     var action: () -> Void
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(6), help: title, action: action) {
+        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: title, action: action) {
             Image(systemName: symbolName)
                 .font(.system(size: 12, weight: .semibold))
                 .frame(width: 28, height: 28)
                 .foregroundStyle(isEnabled ? Color.primary.opacity(0.86) : Color.secondary.opacity(0.38))
-                .background(isEnabled ? Theme.overlayStrong.opacity(0.82) : Color.clear, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .background(isEnabled ? Theme.overlayStrong.opacity(0.82) : Color.clear, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                         .stroke(isEnabled ? Theme.borderSubtle : Color.clear, lineWidth: 1)
                 }
         }

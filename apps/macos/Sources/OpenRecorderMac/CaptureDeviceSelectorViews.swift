@@ -123,9 +123,9 @@ struct MicrophoneSelectorWindowView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 36, height: 36)
-                .background(Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                         .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
                 }
 
@@ -344,9 +344,9 @@ struct CameraSelectorWindowView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 36, height: 36)
-                .background(Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                         .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
                 }
 
@@ -496,7 +496,7 @@ private struct CaptureDeviceOptionRow: View {
                 } else {
                     Circle()
                         .stroke(Theme.borderSubtle, lineWidth: 1.5)
-                        .frame(width: 15, height: 15)
+                        .frame(width: 14, height: 14)
                 }
             }
             .padding(.horizontal, 12)

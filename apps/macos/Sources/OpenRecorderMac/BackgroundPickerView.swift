@@ -8,7 +8,7 @@ struct BackgroundPickerView: View {
 
     @State private var activeKind: BackgroundStylePresetKind
 
-    private let tileCornerRadius: CGFloat = 7
+    private let tileCornerRadius: CGFloat = 0
     private let tileHeight: CGFloat = 32
     private let tileSpacing: CGFloat = 6
 
@@ -45,33 +45,21 @@ struct BackgroundPickerView: View {
             .padding(.bottom, 17)
 
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
                     ForEach(availableKinds) { kind in
-                        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: kind.title) {
+                        Button {
                             activate(kind)
                         } label: {
                             Image(systemName: kind.symbolName)
-                                .font(.system(size: Theme.iconSm, weight: .semibold))
+                                .font(.system(size: Theme.iconSm, weight: activeKind == kind ? .semibold : .medium))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 28)
-                                .background(
-                                    activeKind == kind
-                                        ? Theme.accent
-                                        : Color.white.opacity(0.04),
-                                    in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                                )
-                                .foregroundStyle(activeKind == kind ? Color.white : Theme.fgMuted)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                                        .stroke(
-                                            activeKind == kind
-                                                ? Theme.accent.opacity(0.80)
-                                                : Theme.borderSubtle,
-                                            lineWidth: 1
-                                        )
-                                }
-                                .shadow(color: activeKind == kind ? Theme.accent.opacity(0.30) : Color.clear, radius: 4, y: 1)
+                                .foregroundStyle(activeKind == kind ? Theme.accent : Theme.fgMuted)
+                                .contentShape(Rectangle())
+                                .animation(.snappy(duration: 0.16), value: activeKind == kind)
                         }
+                        .buttonStyle(.plain)
+                        .help(kind.title)
                     }
                 }
 
@@ -218,15 +206,15 @@ struct BackgroundPickerView: View {
     }
 
     private var transparentNote: some View {
-        StudioButton(hitTarget: .rounded(8), help: "Transparent background") {
+        StudioButton(hitTarget: .rounded(Theme.radiusMd), help: "Transparent background") {
             selection = .transparent
         } label: {
             HStack(spacing: 11) {
                 Checkerboard()
                     .frame(width: 56, height: 40)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                             .stroke(Theme.borderStrong.opacity(0.72), lineWidth: 1)
                     }
 
@@ -246,13 +234,13 @@ struct BackgroundPickerView: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Theme.accent)
                     .frame(width: 20, height: 20)
-                    .background(Theme.accent.opacity(0.12), in: Circle())
+                    .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
             }
             .padding(9)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.overlay.opacity(0.72), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .background(Theme.overlay.opacity(0.72), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(Theme.accent.opacity(0.38), lineWidth: 1)
             }
         }
@@ -267,7 +255,7 @@ struct GradientSwatch: View {
         case .linear:
             let endpoints = preset.unitEndpoints()
             return AnyView(
-                RoundedRectangle(cornerRadius: 7).fill(
+                Rectangle().fill(
                     LinearGradient(
                         gradient: Gradient(stops: preset.swiftUIStops),
                         startPoint: endpoints.start,
@@ -279,7 +267,7 @@ struct GradientSwatch: View {
             return AnyView(
                 GeometryReader { proxy in
                     let endRadius = max(proxy.size.width, proxy.size.height)
-                    RoundedRectangle(cornerRadius: 7).fill(
+                    Rectangle().fill(
                         RadialGradient(
                             gradient: Gradient(stops: preset.swiftUIStops),
                             center: UnitPoint(x: cx, y: cy),
@@ -302,7 +290,7 @@ struct WallpaperThumbnail: View {
                 .frame(width: proxy.size.width, height: proxy.size.height)
                 .clipped()
         }
-        .clipShape(RoundedRectangle(cornerRadius: 7))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
     }
 
     @ViewBuilder
@@ -312,7 +300,7 @@ struct WallpaperThumbnail: View {
                 .resizable()
                 .scaledToFill()
         } else {
-            RoundedRectangle(cornerRadius: 7)
+            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                 .fill(Theme.surfaceRaised)
                 .overlay {
                     Image(systemName: "photo")

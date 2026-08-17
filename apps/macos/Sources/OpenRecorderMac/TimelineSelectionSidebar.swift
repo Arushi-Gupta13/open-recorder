@@ -31,7 +31,7 @@ struct TimelineSelectionSidebar: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(selectionAccent)
                 .frame(width: 32, height: 32)
-                .background(selectionAccent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .background(selectionAccent.opacity(0.14), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(selectionTitle)
@@ -430,9 +430,9 @@ private struct TimelineSelectionInfoRow: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 30)
-        .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+        .background(Theme.overlay, in: Rectangle())
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+            Rectangle()
                 .stroke(Theme.borderSubtle, lineWidth: 1)
         }
     }
@@ -480,7 +480,7 @@ private struct TimelineClipSpeedPicker: View {
         HStack(spacing: 6) {
             ForEach(TimelineClipSpeed.values, id: \.self) { value in
                 let isSelected = TimelineClipSpeed.normalized(speed) == value
-                StudioButton(hitTarget: .rounded(7)) {
+                StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
                     speed = value
                 } label: {
                     Text(TimelineClipSpeed.label(value))
@@ -488,9 +488,9 @@ private struct TimelineClipSpeedPicker: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 30)
                         .foregroundStyle(isSelected ? Theme.timelineClipForeground : Color.secondary)
-                        .background(isSelected ? Theme.timelineHandle.opacity(0.92) : Theme.overlay, in: RoundedRectangle(cornerRadius: 7))
+                        .background(isSelected ? Theme.timelineHandle.opacity(0.92) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 7)
+                            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                                 .stroke(isSelected ? Theme.timelineClipBorder : Theme.overlay, lineWidth: isSelected ? 1.5 : 1)
                         }
                 }

@@ -154,24 +154,28 @@ private struct RecordingCountdownOverlay: View {
             Color.black.opacity(0.34)
                 .ignoresSafeArea()
 
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous)
                 .stroke(Color.white.opacity(0.70), lineWidth: 4)
                 .padding(18)
 
             VStack(spacing: 12) {
                 Text("\(state.count)")
-                    .font(.system(size: 132, weight: .bold, design: .rounded))
+                    .font(.system(size: 132, weight: .bold, design: .monospaced))
                     .monospacedDigit()
                     .foregroundStyle(Color.white)
                     .shadow(color: Color.black.opacity(0.55), radius: 18, y: 8)
 
                 Text("Recording \(state.sourceName)")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.82))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.88))
                     .lineLimit(1)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.36), in: Capsule())
+                    .background(Color.black.opacity(0.60), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
+                            .stroke(Theme.borderStrong.opacity(0.60), lineWidth: 1)
+                    }
             }
         }
     }

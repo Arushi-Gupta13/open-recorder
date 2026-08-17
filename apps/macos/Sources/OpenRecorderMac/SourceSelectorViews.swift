@@ -280,7 +280,7 @@ struct SourceTabs: View {
                     .foregroundStyle(isSelected ? Color.white : Theme.fgMuted)
                     .background(
                         isSelected ? Color.white.opacity(0.12) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                     )
                 }
                 .buttonStyle(.plain)
@@ -319,12 +319,12 @@ private struct SourceLoadFailureState: View {
                 .foregroundStyle(Theme.fgMuted)
                 .multilineTextAlignment(.center)
             if let onRetry {
-                StudioButton(hitTarget: .rounded(Theme.radiusMd), action: onRetry) {
+                StudioButton(hitTarget: .rectangle, action: onRetry) {
                     Text("Try Again")
                         .font(.system(size: 12, weight: .semibold))
                         .padding(.horizontal, 14)
                         .frame(height: 30)
-                        .background(Theme.accent, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                        .background(Theme.accent, in: Rectangle())
                         .foregroundStyle(.white)
                 }
                 .padding(.top, 4)
@@ -492,7 +492,7 @@ struct SourceThumbnailPreview: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             } else {
                 thumbnailPlaceholder
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -505,7 +505,7 @@ struct SourceThumbnailPreview: View {
                         Image(systemName: "checkmark")
                             .font(.system(size: 10, weight: .bold))
                             .frame(width: 20, height: 20)
-                            .background(Theme.accent, in: Circle())
+                            .background(Theme.accent, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
                             .foregroundStyle(.white)
                             .shadow(color: Theme.accent.opacity(0.5), radius: 4)
                     }
@@ -515,9 +515,9 @@ struct SourceThumbnailPreview: View {
             }
         }
         .aspectRatio(aspectRatio, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                 .strokeBorder(
                     isSelected ? Theme.accent : (isHovering ? Theme.borderStrong : Theme.borderSubtle),
                     lineWidth: isSelected ? 2 : 1
@@ -556,14 +556,14 @@ struct SourceEmptyState: View {
             }
 
             if sourceTab == .area {
-                StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
+                StudioButton(hitTarget: .rectangle) {
                     onDrawArea?()
                 } label: {
                     Label("Draw Selection", systemImage: "rectangle.dashed")
                         .font(.system(size: 12, weight: .semibold))
                         .frame(height: Theme.btnHeightMd)
                         .padding(.horizontal, 16)
-                        .background(Theme.accent, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                        .background(Theme.accent, in: Rectangle())
                         .foregroundStyle(.white)
                 }
                 .padding(.top, 4)

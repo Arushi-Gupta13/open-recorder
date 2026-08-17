@@ -167,9 +167,9 @@ struct VideoCropDialog: View {
                 endPoint: .bottom
             )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(Rectangle())
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            Rectangle()
                 .stroke(Theme.borderStrong, lineWidth: 1)
         }
         .interactiveDismissDisabled()
@@ -241,7 +241,7 @@ struct VideoCropDialog: View {
                     .font(.system(size: 12, weight: .semibold))
                     .frame(height: 36)
                     .padding(.horizontal, 12)
-                    .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 7))
+                    .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             }
             .buttonStyle(.plain)
             .foregroundStyle(.white)
@@ -367,7 +367,7 @@ private struct VideoCropKeyboardShortcutsDropdown: View {
             ForEach(shortcuts) { shortcut in
                 HStack(spacing: 12) {
                     Text(shortcut.keys)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Color.white.opacity(0.92))
                         .lineLimit(1)
                         .frame(width: 54, height: 24)
@@ -402,7 +402,6 @@ private struct VideoCropKeyboardShortcutsDropdown: View {
 private struct VideoCropShortcutHelpItem: Identifiable {
     var keys: String
     var action: String
-
     var id: String { keys }
 }
 
@@ -439,7 +438,7 @@ private struct VideoCropCanvas: View {
                 cropOverlay(displayRect: displayRect, videoFrame: videoFrame, sourceSize: safeSourceSize)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
     }
 
     private func drawHitArea(videoFrame: CGRect, sourceSize: CGSize) -> some View {
@@ -597,11 +596,15 @@ private struct CropNumberField: View {
     var body: some View {
         TextField("", value: $value, formatter: NumberFormatter.cropInteger)
             .textFieldStyle(.plain)
-            .font(.system(size: 12, weight: .semibold, design: .rounded))
+            .font(.system(size: 12, weight: .semibold, design: .monospaced))
             .foregroundStyle(.white)
             .multilineTextAlignment(.center)
             .frame(width: 64, height: 36)
-            .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 7))
+            .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                    .stroke(Theme.border, lineWidth: 1)
+            }
             .accessibilityLabel(label)
     }
 }
@@ -629,7 +632,6 @@ private struct CropHandleView: View {
                 Circle()
                     .stroke(Color.white, lineWidth: 1.4)
             }
-            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
     }
 }
 
