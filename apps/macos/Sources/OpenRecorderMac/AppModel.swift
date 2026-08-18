@@ -128,7 +128,21 @@ final class AppModel: ObservableObject {
     }
     var includeCamera: Bool {
         get { captureOptions.state.includeCamera }
-        set { captureOptions.send(.cameraEnabledChanged(newValue)) }
+        set {
+            captureOptions.send(.cameraEnabledChanged(newValue))
+            if newValue {
+                prewarmSelectedFacecamIfNeeded()
+                requestWindow(.showCameraBubble)
+            } else {
+                requestWindow(.closeCameraBubble)
+            }
+        }
+    }
+    var cameraCaptureSession: AVCaptureSession? {
+        facecamRecorder.captureSession
+    }
+    func prepareCameraIfNeeded() {
+        prewarmSelectedFacecamIfNeeded()
     }
     var showCursor: Bool {
         get { captureOptions.state.showCursor }
@@ -2353,6 +2367,7 @@ final class AppModel: ObservableObject {
     func disableCamera() {
         captureOptions.send(.cameraDisabled)
         cancelFacecamPrewarm()
+        requestWindow(.closeCameraBubble)
     }
 
     var selectedMicrophoneDeviceName: String {

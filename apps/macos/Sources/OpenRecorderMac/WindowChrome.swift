@@ -10,6 +10,7 @@ enum NativeWindowRole {
     case sourceSelector
     case microphoneSelector
     case cameraSelector
+    case cameraBubble
     case areaSelector
     case studio
 }
@@ -118,11 +119,45 @@ final class WindowConfigurationView: NSView {
             configureMicrophoneSelector(window)
         case .cameraSelector:
             configureCameraSelector(window)
+        case .cameraBubble:
+            configureCameraBubble(window)
         case .areaSelector:
             configureAreaSelector(window)
         case .studio:
             configureStudio(window)
         }
+    }
+
+    private func configureCameraBubble(_ window: NSWindow) {
+        window.title = "Camera Preview"
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.level = .floating
+        window.collectionBehavior = [
+            .canJoinAllSpaces,
+            .fullScreenAuxiliary,
+            .stationary
+        ]
+        window.isMovableByWindowBackground = true
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.styleMask.insert([.fullSizeContentView, .resizable])
+        [.closeButton, .miniaturizeButton, .zoomButton].forEach { button in
+            window.standardWindowButton(button)?.isHidden = true
+        }
+        if window.frame.origin.y < 50 || window.frame.origin == .zero {
+            if let screen = window.screen ?? NSScreen.main {
+                let visibleFrame = screen.visibleFrame
+                let windowSize = window.frame.size
+                let origin = CGPoint(
+                    x: visibleFrame.maxX - windowSize.width - 32,
+                    y: visibleFrame.maxY - windowSize.height - 32
+                )
+                window.setFrameOrigin(origin)
+            }
+        }
+        window.orderFrontRegardless()
     }
 
     private func configureHUD(_ window: NSWindow) {
@@ -476,6 +511,10 @@ struct WindowCommandBridge: View {
         case .showCameraSelector:
             NSApp.unhide(nil)
             openWindow(id: "camera-selector")
+        case .showCameraBubble:
+            openWindow(id: "camera-bubble")
+        case .closeCameraBubble:
+            dismissWindow(id: "camera-bubble")
         case .showAreaSelector:
             NSApp.unhide(nil)
             openWindow(id: "area-selector")
@@ -508,6 +547,7 @@ struct WindowCommandBridge: View {
         dismissWindow(id: "area-selector")
         dismissWindow(id: "microphone-selector")
         dismissWindow(id: "camera-selector")
+        dismissWindow(id: "camera-bubble")
     }
 
     private func hideAppWindowsForCapture() {

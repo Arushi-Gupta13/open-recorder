@@ -9,6 +9,7 @@ enum AppWindowRole {
     case sourceSelector
     case microphoneSelector
     case cameraSelector
+    case cameraBubble
     case areaSelector
     case studio
 }
@@ -40,6 +41,9 @@ struct ContentView: View {
                 CameraSelectorWindowView()
                     .frame(width: CaptureDeviceSelectorWindowMetrics.width, height: CaptureDeviceSelectorWindowMetrics.height)
                     .background(WindowConfigurator(role: .cameraSelector))
+            case .cameraBubble:
+                CameraBubbleWindowView()
+                    .background(WindowConfigurator(role: .cameraBubble))
             case .areaSelector:
                 AreaSelectionWindowView()
                     .background(WindowConfigurator(role: .areaSelector, isPresented: model.isAreaSelectionActive))

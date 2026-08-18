@@ -890,6 +890,8 @@ enum NativeWindowCommandAction: Equatable {
     case showMicrophoneSelector
     case showCameraSelector
     case showAreaSelector
+    case showCameraBubble
+    case closeCameraBubble
     case showStudio
     case closeCaptureSetup
     case closeSourceSelector
