@@ -345,6 +345,7 @@ final class AppWindowActions {
             openWindow("area-selector")
         case .showStudio:
             unhideApp()
+            dismissCaptureWindows()
             if let editorSession = command.editorSession {
                 openEditor(editorSession)
             } else {

@@ -2007,7 +2007,7 @@ final class AppModelStateTests: XCTestCase {
         XCTAssertTrue(actions.isInstalled)
         XCTAssertEqual(openedEditorSession, session)
         XCTAssertTrue(openedWindows.isEmpty)
-        XCTAssertTrue(dismissedWindows.isEmpty)
+        XCTAssertEqual(dismissedWindows, ["hud", "source-selector", "area-selector", "microphone-selector", "camera-selector"])
         XCTAssertTrue(didUnhideApp)
     }
 

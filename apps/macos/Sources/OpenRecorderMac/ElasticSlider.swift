@@ -12,9 +12,9 @@ struct ElasticSlider: View {
     var dragStep: Double?
     var trackHeight: CGFloat = 26
     var hitHeight: CGFloat = 26
-    var fillColor: Color = Theme.accent
+    var fillColor: Color = Color.white.opacity(0.20)
     var dragFillColor: Color?
-    var thumbSize: CGFloat = 13
+    var thumbSize: CGFloat = 18
     var thumbWidth: CGFloat? = 38
     var thumbHeight: CGFloat? = 18
     var thumbColor: Color = Color.white
@@ -42,21 +42,15 @@ struct ElasticSlider: View {
             let valueX = thumbRadius + travelDistance * CGFloat(progress)
 
             ZStack {
-                // Background Track Bar
+                // Background Track Bar with fully rounded capsule container
                 ZStack(alignment: .leading) {
-                    // Outer track with gentle border radius
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
+                    // Outer track container: seamless dark dark grey (close to black)
+                    Capsule(style: .continuous)
+                        .fill(Color.black.opacity(0.38))
                         .overlay {
-                            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                                .stroke(Color.white.opacity(isHovering || isDragging ? 0.18 : 0.08), lineWidth: 1)
+                            Capsule(style: .continuous)
+                                .stroke(Color.white.opacity(isHovering || isDragging ? 0.16 : 0.08), lineWidth: 1)
                         }
-
-                    // Active accent progress fill
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .fill(fillColor.opacity(0.24))
-                        .frame(width: max(valueX, trackHeight), height: trackHeight)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
 
                     // Step dots / Graduation markers (only on un-scrolled section to the right)
                     if showStepDots && width > 80 {
@@ -64,16 +58,17 @@ struct ElasticSlider: View {
                     }
                 }
                 .frame(width: width, height: trackHeight)
+                .clipShape(Capsule(style: .continuous))
 
-                // Sliding Thumb Pill with gentle squircle corners matching app buttons
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                // Sliding Fully Rounded Pill Tab Handle
+                Capsule(style: .continuous)
                     .fill(thumbColor)
                     .frame(width: resolvedThumbWidth, height: resolvedThumbHeight)
                     .overlay {
-                        RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                            .stroke(Color.black.opacity(0.14), lineWidth: 0.8)
+                        Capsule(style: .continuous)
+                            .stroke(Color.black.opacity(0.12), lineWidth: 0.8)
                     }
-                    .shadow(color: Color.black.opacity(0.40), radius: isDragging ? 4 : 2, y: 1)
+                    .shadow(color: Color.black.opacity(0.38), radius: isDragging ? 4 : 2, y: 1)
                     .scaleEffect(isDragging ? 1.05 : (isHovering ? 1.02 : 1.0))
                     .position(x: valueX, y: trackHeight / 2)
                     .animation(Theme.springFast, value: isDragging)
@@ -86,7 +81,7 @@ struct ElasticSlider: View {
                 }
             }
             .frame(width: width, height: trackHeight)
-            .contentShape(Rectangle())
+            .contentShape(Capsule(style: .continuous))
             .gesture(dragGesture(width: width, thumbWidth: resolvedThumbWidth))
         }
         .frame(height: trackHeight)
@@ -148,11 +143,11 @@ struct ElasticSlider: View {
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                Capsule(style: .continuous)
                     .fill(Color.black.opacity(0.85))
             )
             .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                Capsule(style: .continuous)
                     .stroke(Color.white.opacity(0.20), lineWidth: 1)
             }
             .shadow(color: Color.black.opacity(0.35), radius: 6, y: 3)

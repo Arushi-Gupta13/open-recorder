@@ -46,6 +46,8 @@ struct WindowConfigurator: NSViewRepresentable {
 }
 
 final class WindowConfigurationView: NSView {
+    override var isFlipped: Bool { true }
+
     var role: NativeWindowRole = .studio {
         didSet {
             if role != oldValue {
@@ -124,14 +126,9 @@ final class WindowConfigurationView: NSView {
     }
 
     private func configureHUD(_ window: NSWindow) {
-        let size = HUDWindowMetrics.clampedSize(
-            for: preferredSize ?? HUDWindowMetrics.defaultSize,
-            screen: window.screen ?? NSScreen.main
-        )
+        let size = HUDWindowMetrics.defaultSize
         window.title = "Open Recorder"
         window.setContentSize(size)
-        window.minSize = size
-        window.maxSize = size
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -145,7 +142,9 @@ final class WindowConfigurationView: NSView {
         [.closeButton, .miniaturizeButton, .zoomButton].forEach { button in
             window.standardWindowButton(button)?.isHidden = true
         }
-        positionBottomCenter(window, contentSize: size)
+        if window.frame.origin.y < 30 || window.frame.origin == .zero {
+            positionBottomCenter(window, contentSize: size)
+        }
         startSyncingHUDToActiveSpace(for: window)
         window.orderFrontRegardless()
     }
@@ -374,6 +373,8 @@ struct SourceSelectorWindowSizer: NSViewRepresentable {
 }
 
 final class SourceSelectorWindowSizingView: NSView {
+    override var isFlipped: Bool { true }
+
     var preferredContentSize: CGSize = .zero
 
     override func viewDidMoveToWindow() {
@@ -480,6 +481,7 @@ struct WindowCommandBridge: View {
             openWindow(id: "area-selector")
         case .showStudio:
             NSApp.unhide(nil)
+            dismissCaptureWindows()
             if let editorSession = command.editorSession {
                 openWindow(id: "editor", value: editorSession)
             } else {

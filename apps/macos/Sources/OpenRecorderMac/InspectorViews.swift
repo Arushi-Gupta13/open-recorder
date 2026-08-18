@@ -370,9 +370,9 @@ struct InspectorSlider: View {
                 dragStep: intermediateStep,
                 trackHeight: 26,
                 hitHeight: 26,
-                fillColor: Theme.accent,
-                thumbWidth: 42,
-                thumbHeight: 20,
+                fillColor: Color.white.opacity(0.20),
+                thumbWidth: 40,
+                thumbHeight: 18,
                 showStepDots: true,
                 showTooltip: false,
                 setsValueFromPointerLocation: true

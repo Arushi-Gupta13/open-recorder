@@ -8,7 +8,7 @@ enum HUDWindowMetrics {
     static let height: CGFloat = 155
     static let horizontalScreenMargin: CGFloat = 32
     static let minWidth: CGFloat = 360
-    static let defaultSize = CGSize(width: 680, height: height)
+    static let defaultSize = CGSize(width: 720, height: height)
 
     static func clampedSize(for measuredSize: CGSize, screen: NSScreen?) -> CGSize {
         clampedSize(for: measuredSize, visibleFrame: screen?.visibleFrame)
@@ -476,6 +476,8 @@ struct StudioKeyDownMonitor: NSViewRepresentable {
 }
 
 final class StudioKeyMonitorAttachmentView: NSView {
+    override var isFlipped: Bool { true }
+
     nonisolated let windowScope = StudioKeyWindowScopeCache()
     private weak var observedWindow: NSWindow?
 
@@ -593,6 +595,8 @@ struct HUDSurface<Content: View>: View {
 
     var body: some View {
         content
+            .environment(\.layoutDirection, .leftToRight)
+            .flipsForRightToLeftLayoutDirection(false)
             .padding(.horizontal, 9)
             .padding(.vertical, 7)
             .background {
@@ -622,6 +626,8 @@ struct HUDSurface<Content: View>: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
             .shadow(color: Color.black.opacity(0.28), radius: 12, y: 6)
+            .environment(\.layoutDirection, .leftToRight)
+            .flipsForRightToLeftLayoutDirection(false)
     }
 }
 

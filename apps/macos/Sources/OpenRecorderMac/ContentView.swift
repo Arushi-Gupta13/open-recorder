@@ -58,38 +58,10 @@ struct ContentView: View {
 
     @ViewBuilder
     private var hudWindowContent: some View {
-        let preferredSize = preferredHUDSize
-
-        ZStack {
-            HUDOverlayWindowView()
-                .fixedSize(horizontal: true, vertical: false)
-                .readSize { size in
-                    updateMeasuredHUDSize(size)
-                }
-                .hidden()
-                .allowsHitTesting(false)
-
-            HUDOverlayWindowView()
-                .frame(maxWidth: preferredSize.width, maxHeight: preferredSize.height)
-        }
-        .frame(width: preferredSize.width, height: preferredSize.height)
-        .background(WindowConfigurator(role: .hud, preferredSize: preferredSize))
-    }
-
-    private var preferredHUDSize: CGSize {
-        HUDWindowMetrics.clampedSize(for: measuredHUDSize, screen: NSScreen.main)
-    }
-
-    private func updateMeasuredHUDSize(_ size: CGSize) {
-        guard size.width.isFinite,
-              size.height.isFinite,
-              size.width > 0,
-              size.height > 0,
-              size != measuredHUDSize else {
-            return
-        }
-
-        measuredHUDSize = size
+        HUDOverlayWindowView()
+            .environment(\.layoutDirection, .leftToRight)
+            .flipsForRightToLeftLayoutDirection(false)
+            .background(WindowConfigurator(role: .hud))
     }
 }
 

@@ -23,7 +23,8 @@ struct CaptureHUD: View {
                 screenshotControls
             }
         }
-        .animation(Theme.springSmooth, value: isRecordingActive)
+        .environment(\.layoutDirection, .leftToRight)
+        .flipsForRightToLeftLayoutDirection(false)
     }
 
     private var activeRecordingControls: some View {
@@ -95,11 +96,7 @@ struct CaptureHUD: View {
     }
 
     private var recordingControls: some View {
-        ViewThatFits(in: .horizontal) {
-            fullRecordingControls
-            compactRecordingControls
-            narrowRecordingControls
-        }
+        fullRecordingControls
     }
 
     private var fullRecordingControls: some View {
