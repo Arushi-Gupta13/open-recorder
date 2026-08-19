@@ -135,7 +135,17 @@ final class RecordingCountdownOverlayController {
         window.contentView = NSHostingView(rootView: RecordingCountdownOverlay(state: state))
         self.window = window
         window.setFrame(frame, display: true)
+        // NSApp may have been hidden (via hideAppWindowsForCapture). Temporarily
+        // unhide the app so the countdown window can be shown, then re-hide all
+        // other app windows so only the overlay (at .screenSaver level) is visible.
+        NSApp.unhide(nil)
         window.orderFrontRegardless()
+        // Hide all other app windows except our countdown window
+        for appWindow in NSApp.windows where appWindow !== window {
+            if appWindow.isVisible {
+                appWindow.orderOut(nil)
+            }
+        }
     }
 }
 

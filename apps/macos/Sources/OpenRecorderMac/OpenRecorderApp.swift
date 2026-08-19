@@ -131,6 +131,8 @@ struct OpenRecorderApp: App {
                 .background(AppWindowActionBridge(appDelegate: appDelegate))
         }
         .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
         .defaultSize(width: SourceSelectorWindowMetrics.width, height: SourceSelectorWindowMetrics.compactHeight)
 
         Window("Choose Microphone", id: "microphone-selector") {

@@ -224,6 +224,8 @@ final class WindowConfigurationView: NSView {
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
         window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func configureMicrophoneSelector(_ window: NSWindow) {
