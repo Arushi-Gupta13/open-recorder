@@ -39,8 +39,6 @@ struct TimelinePanel: View {
         VStack(spacing: 0) {
             timelineToolbar
 
-            Rectangle().fill(Theme.border).frame(height: 1)
-
             ZStack(alignment: .top) {
                 Button {
                     edits.clearSelection()
@@ -127,11 +125,6 @@ struct TimelinePanel: View {
                 ) {
                     edits.addClipSplit(at: playback.currentTime, duration: playback.duration)
                 }
-
-                Rectangle()
-                    .fill(Theme.borderStrong.opacity(0.46))
-                    .frame(width: 1, height: 22)
-                    .padding(.horizontal, 3)
 
                 TimelinePreviewSpeedPicker(playback: playback)
 
@@ -293,26 +286,20 @@ private struct TimelinePlayPauseButton: View {
 
     var body: some View {
         let title = playback.isPlaying ? "Pause" : "Play"
-        StudioButton(hitTarget: .rounded(10)) {
+        Button {
             playback.togglePlayback()
         } label: {
             Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(isHovering || playback.isPlaying ? Color.white : Color.white.opacity(0.85))
+                .frame(width: 28, height: 28)
                 .offset(x: playback.isPlaying ? 0 : 1)
-                .background {
-                    Circle()
-                        .fill(playback.isPlaying ? Theme.accent.opacity(isHovering ? 0.95 : 0.86) : Color.white.opacity(isHovering ? 0.14 : 0.09))
-                }
-                .overlay {
-                    Circle()
-                        .stroke(playback.isPlaying ? Theme.accent.opacity(0.48) : Color.white.opacity(isHovering ? 0.24 : 0.12), lineWidth: 1)
-                }
-                .shadow(color: Theme.scrim, radius: 8, y: 3)
+                .background(isHovering ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
+        .buttonStyle(.plain)
         .disabled(playback.player == nil)
         .opacity(playback.player == nil ? 0.42 : 1)
+        .help(title)
         .accessibilityLabel(title)
         .onHover { hovering in
             isHovering = hovering
@@ -363,19 +350,13 @@ private struct TimelineTimeDisplay: View {
             Text(formatPlaybackTime(currentTime))
                 .foregroundStyle(Color.white)
             Text("/")
-                .foregroundStyle(Theme.fgSubtle)
+                .foregroundStyle(Theme.fgSubtle.opacity(0.60))
             Text(formatPlaybackTime(duration))
                 .foregroundStyle(Theme.fgMuted)
         }
-        .font(.system(size: 11, weight: .bold, design: .monospaced))
+        .font(.system(size: 11.5, weight: .semibold, design: .monospaced))
         .monospacedDigit()
-        .padding(.horizontal, 10)
-        .frame(height: 28)
-        .background(Theme.surfaceRaised.opacity(0.92), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                .stroke(Theme.borderStrong.opacity(0.75), lineWidth: 1)
-        }
+        .padding(.horizontal, 4)
         .accessibilityLabel("Playback time \(formatPlaybackTime(currentTime)) of \(formatPlaybackTime(duration))")
     }
 }
@@ -421,30 +402,41 @@ private struct TimelineZoomSlider: View {
     @Binding var isDragging: Bool
 
     var body: some View {
-        ElasticSlider(
-            value: sliderValue,
-            range: 0...1,
-            step: 0.01,
-            valueText: visibleDurationText,
-            onEditingChanged: { editing in
-                withAnimation(.easeOut(duration: 0.12)) {
-                    isDragging = editing
-                }
-            },
-            trackHeight: 24,
-            hitHeight: 24,
-            fillColor: Theme.accent,
-            thumbWidth: 34,
-            thumbHeight: 18,
-            showStepDots: true,
-            showTooltip: false,
-            setsValueFromPointerLocation: true
-        )
-        .frame(width: 140)
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.fgSubtle)
+
+            ElasticSlider(
+                value: sliderValue,
+                range: 0...1,
+                step: 0.01,
+                valueText: zoomPercentageText,
+                onEditingChanged: { editing in
+                    withAnimation(.easeOut(duration: 0.12)) {
+                        isDragging = editing
+                    }
+                },
+                trackHeight: 20,
+                hitHeight: 20,
+                fillColor: Color.white.opacity(0.20),
+                thumbWidth: 28,
+                thumbHeight: 14,
+                showStepDots: false,
+                showTooltip: false,
+                setsValueFromPointerLocation: true
+            )
+            .frame(width: 85)
+
+            Text(zoomPercentageText)
+                .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Theme.fgMuted)
+                .frame(width: 36, alignment: .trailing)
+        }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.45)
-        .accessibilityLabel("Timeline zoom")
-        .help("Timeline zoom")
+        .accessibilityLabel("Timeline zoom \(zoomPercentageText)")
+        .help("Timeline zoom percentage")
     }
 
     private var sliderValue: Binding<Double> {
@@ -468,8 +460,11 @@ private struct TimelineZoomSlider: View {
         TimelineViewport.isZoomEnabled(duration: duration)
     }
 
-    private var visibleDurationText: String {
-        "\(Int(max(0, viewport.visibleDuration).rounded()))s visible"
+    private var zoomPercentageText: String {
+        guard duration > 0, viewport.visibleDuration > 0 else { return "100%" }
+        let zoomRatio = duration / max(viewport.visibleDuration, TimelineViewport.minimumVisibleDuration)
+        let percent = max(100, Int((zoomRatio * 100).rounded()))
+        return "\(percent)%"
     }
 }
 
@@ -663,10 +658,18 @@ struct TimelinePlayhead: View {
     var body: some View {
         GeometryReader { proxy in
             let x = viewport.x(for: currentTime, width: proxy.size.width, clamped: true) ?? 0
-            Rectangle()
-                .fill(Color(red: 0.40, green: 0.31, blue: 1.0).opacity(0.98))
-                .frame(width: TimelineMetrics.playheadWidth, height: proxy.size.height)
-                .offset(x: x - TimelineMetrics.playheadWidth / 2)
+            ZStack(alignment: .top) {
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: 1.5, height: proxy.size.height)
+
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 10, height: 10)
+                    .shadow(color: Color.black.opacity(0.40), radius: 3, y: 1)
+                    .offset(y: -4)
+            }
+            .offset(x: x - 0.75)
         }
         .allowsHitTesting(false)
     }
@@ -814,6 +817,60 @@ enum PreviewPlaybackSpeedSelection {
     }
 }
 
+struct FilmstripPatternView: View {
+    var width: CGFloat
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                ForEach(0..<max(1, Int(width / 14)), id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(Color.black.opacity(0.35))
+                        .frame(width: 5, height: 3.5)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 3)
+            .padding(.top, 3)
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                ForEach(0..<max(1, Int(width / 14)), id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(Color.black.opacity(0.35))
+                        .frame(width: 5, height: 3.5)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 3)
+            .padding(.bottom, 3)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+struct ClipWaveformTextureView: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Path { path in
+                let step: CGFloat = 5
+                let count = Int(proxy.size.width / step)
+                let midY = proxy.size.height * 0.65
+                for i in 0..<count {
+                    let x = CGFloat(i) * step + 2
+                    let sinVal = abs(sin(Double(i) * 0.38) * cos(Double(i) * 0.18)) * 0.75 + 0.25
+                    let h = proxy.size.height * 0.35 * CGFloat(sinVal)
+                    path.move(to: CGPoint(x: x, y: midY - h / 2))
+                    path.addLine(to: CGPoint(x: x, y: midY + h / 2))
+                }
+            }
+            .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+        }
+        .allowsHitTesting(false)
+    }
+}
+
 struct TimelineClipRow: View {
     var videoURL: URL?
     var duration: Double
@@ -891,24 +948,37 @@ struct TimelineClipRow: View {
 
     private func clipBody(segment: TimelineClipSegment, width: CGFloat, isSelected: Bool, isDeleted: Bool) -> some View {
         let foreground = isDeleted ? Color.white.opacity(0.48) : Theme.timelineClipForeground
-        return Rectangle()
+        return RoundedRectangle(cornerRadius: 6, style: .continuous)
             .fill(
                 isDeleted
-                    ? Color.secondary.opacity(isSelected ? 0.30 : 0.20)
-                    : (isSelected ? Theme.accent : Theme.timelineClip)
+                    ? LinearGradient(colors: [Color.secondary.opacity(0.25), Color.secondary.opacity(0.15)], startPoint: .top, endPoint: .bottom)
+                    : (isSelected
+                        ? LinearGradient(colors: [Theme.accent, Theme.accent.opacity(0.85)], startPoint: .top, endPoint: .bottom)
+                        : LinearGradient(colors: [Color(red: 0.16, green: 0.22, blue: 0.38), Color(red: 0.11, green: 0.15, blue: 0.28)], startPoint: .top, endPoint: .bottom))
             )
             .overlay {
-                Rectangle()
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .stroke(
-                        isSelected ? Theme.timelineHandle : (isDeleted ? Color.secondary.opacity(0.42) : Theme.timelineClipBorder),
-                        lineWidth: isSelected ? 2 : 1
+                        isSelected ? Color.white.opacity(0.70) : (isDeleted ? Color.secondary.opacity(0.42) : Color.white.opacity(0.12)),
+                        lineWidth: isSelected ? 1.5 : 1
                     )
+            }
+            .overlay {
+                if !isDeleted {
+                    FilmstripPatternView(width: width)
+                }
             }
             .overlay(alignment: .bottom) {
                 if let waveformSamples, !waveformSamples.isEmpty, !isDeleted {
                     TimelineWaveformPreview(samples: waveformSamples)
                         .frame(height: 35)
                         .padding(.horizontal, 10)
+                        .padding(.bottom, 8)
+                        .allowsHitTesting(false)
+                } else if !isDeleted {
+                    ClipWaveformTextureView()
+                        .frame(height: 30)
+                        .padding(.horizontal, 8)
                         .padding(.bottom, 8)
                         .allowsHitTesting(false)
                 }
@@ -983,13 +1053,26 @@ struct TimelineClipRow: View {
 }
 
 struct TimelineResizeHandle: View {
+    @State private var isHovering = false
+
     var body: some View {
-        Circle()
-            .fill(Theme.timelineHandle)
-            .frame(width: 20, height: 20)
-            .overlay { Image(systemName: "arrow.left.and.right").font(.system(size: 8, weight: .bold)).foregroundStyle(Color.black.opacity(0.82)) }
-            .overlay { Circle().stroke(Theme.scrim, lineWidth: 1) }
-            .shadow(color: Color.black.opacity(0.24), radius: 6, y: 3)
+        RoundedRectangle(cornerRadius: 3, style: .continuous)
+            .fill(isHovering ? Color.white : Color.white.opacity(0.90))
+            .frame(width: 7, height: 20)
+            .overlay {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .stroke(Color.black.opacity(0.35), lineWidth: 0.8)
+            }
+            .overlay {
+                HStack(spacing: 1.5) {
+                    Rectangle().fill(Color.black.opacity(0.35)).frame(width: 1, height: 9)
+                    Rectangle().fill(Color.black.opacity(0.35)).frame(width: 1, height: 9)
+                }
+            }
+            .shadow(color: Color.black.opacity(0.35), radius: 3, y: 1)
+            .scaleEffect(isHovering ? 1.15 : 1.0)
+            .animation(.snappy(duration: 0.15), value: isHovering)
+            .onHover { isHovering = $0 }
     }
 }
 
@@ -1010,10 +1093,10 @@ struct TimelineWaveformPreview: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.94),
-                                Color.white.opacity(0.80),
-                                Theme.timelineHandle.opacity(0.68),
-                                Theme.timelineClipBorder.opacity(0.42)
+                                Color(red: 0.28, green: 0.88, blue: 0.98).opacity(0.95), // Bright Cyan
+                                Color(red: 0.38, green: 0.52, blue: 1.00).opacity(0.90), // Electric Blue
+                                Color(red: 0.76, green: 0.35, blue: 0.96).opacity(0.85), // Vivid Violet
+                                Color(red: 0.95, green: 0.40, blue: 0.65).opacity(0.60)  // Magenta
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -1025,15 +1108,15 @@ struct TimelineWaveformPreview: View {
                         y: .value("Upper crest", sample.amplitude)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(Color.white.opacity(0.28))
-                    .lineStyle(StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
+                    .foregroundStyle(Color(red: 0.45, green: 0.95, blue: 1.0).opacity(0.85))
+                    .lineStyle(StrokeStyle(lineWidth: 1.0, lineCap: .round, lineJoin: .round))
 
                     LineMark(
                         x: .value("Position", sample.position),
                         y: .value("Lower crest", -sample.amplitude)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(Theme.timelineHandle.opacity(0.18))
+                    .foregroundStyle(Color(red: 0.85, green: 0.45, blue: 0.95).opacity(0.65))
                     .lineStyle(StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
                 }
                 .chartXAxis(.hidden)
@@ -1280,8 +1363,8 @@ private struct TimelineCameraClipItem: View {
     var fallbackSettings: FacecamSettings?
     var edits: TimelineEditDriver
 
-    private var accent: Color {
-        clip.settings.clamped.enabled ? Theme.timelineCamera : Color.secondary.opacity(0.52)
+    private var greenColor: Color {
+        Color(red: 0.22, green: 0.85, blue: 0.46)
     }
 
     var body: some View {
@@ -1291,12 +1374,18 @@ private struct TimelineCameraClipItem: View {
         Button {
             edits.selectCameraClip(id: clip.id)
         } label: {
-            Rectangle()
-                .fill(accent.opacity(clip.settings.clamped.enabled ? (isSelected ? 0.55 : 0.34) : 0.18))
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(clip.settings.clamped.enabled ? (isSelected ? greenColor.opacity(0.24) : greenColor.opacity(0.08)) : Color.secondary.opacity(0.08))
                 .overlay {
-                    Rectangle()
-                        .stroke(accent.opacity(isSelected ? 0.95 : 0.65), lineWidth: isSelected ? 2 : 1)
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .stroke(
+                            clip.settings.clamped.enabled
+                                ? (isSelected ? greenColor : greenColor.opacity(0.65))
+                                : Color.secondary.opacity(0.40),
+                            lineWidth: isSelected ? 1.8 : 1.0
+                        )
                 }
+                .shadow(color: isSelected && clip.settings.clamped.enabled ? greenColor.opacity(0.35) : Color.clear, radius: 4)
                 .overlay { label(width: itemWidth) }
         }
         .buttonStyle(.plain)
@@ -1331,7 +1420,7 @@ private struct TimelineCameraClipItem: View {
                 .font(.system(size: 10, weight: .bold))
                 .lineLimit(1)
         }
-        .foregroundStyle(.white.opacity(clip.settings.clamped.enabled ? 0.94 : 0.66))
+        .foregroundStyle(clip.settings.clamped.enabled ? (isSelected ? greenColor : greenColor.opacity(0.90)) : Color.secondary.opacity(0.70))
         .minimumScaleFactor(0.72)
         .padding(.horizontal, 8)
         .frame(maxWidth: max(1, width))
@@ -1384,36 +1473,66 @@ struct TimelineRegionItem: View {
     }
 
     private func regionBody(width: CGFloat) -> some View {
-        Rectangle()
-            .fill(kind.accent.opacity(isSelected ? 0.55 : 0.34))
-            .overlay { Rectangle().stroke(kind.accent.opacity(isSelected ? 0.95 : 0.65), lineWidth: isSelected ? 2 : 1) }
-            .overlay { regionLabel(width: width) }
-            .overlay(alignment: .leading) {
-                if showsLeadingHandle {
-                    TimelineResizeHandle().offset(x: -9).gesture(resizeGesture(edge: .leading))
-                }
+        Group {
+            if kind == .zoom {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                (isSelected ? Theme.accent : Color(red: 0.38, green: 0.28, blue: 0.88)).opacity(isSelected ? 0.82 : 0.58),
+                                (isSelected ? Theme.accent.opacity(0.95) : Color(red: 0.28, green: 0.18, blue: 0.72)).opacity(isSelected ? 0.95 : 0.72)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(
+                                isSelected ? Color.white.opacity(0.88) : Color(red: 0.52, green: 0.44, blue: 0.98).opacity(0.70),
+                                lineWidth: isSelected ? 1.5 : 1
+                            )
+                    }
+                    .shadow(color: (isSelected ? Theme.accent : Color(red: 0.38, green: 0.28, blue: 0.88)).opacity(isSelected ? 0.40 : 0.20), radius: isSelected ? 6 : 3, y: 1)
+            } else {
+                Rectangle()
+                    .fill(kind.accent.opacity(isSelected ? 0.55 : 0.34))
+                    .overlay { Rectangle().stroke(kind.accent.opacity(isSelected ? 0.95 : 0.65), lineWidth: isSelected ? 2 : 1) }
             }
-            .overlay(alignment: .trailing) {
-                if showsTrailingHandle {
-                    TimelineResizeHandle().offset(x: 9).gesture(resizeGesture(edge: .trailing))
-                }
+        }
+        .overlay { regionLabel(width: width) }
+        .overlay(alignment: .leading) {
+            if showsLeadingHandle {
+                TimelineResizeHandle().offset(x: -9).gesture(resizeGesture(edge: .leading))
             }
+        }
+        .overlay(alignment: .trailing) {
+            if showsTrailingHandle {
+                TimelineResizeHandle().offset(x: 9).gesture(resizeGesture(edge: .trailing))
+            }
+        }
     }
 
     private func regionLabel(width: CGFloat) -> some View {
         HStack(spacing: 4) {
+            if kind == .zoom {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(Color.white.opacity(0.92))
+            }
+
             Text(region.label)
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .lineLimit(1)
 
-            if region.showsAutoBadge, width > 52 {
+            if region.showsAutoBadge, width > 64 {
                 Text("Auto")
                     .font(.system(size: 8, weight: .bold))
                     .foregroundStyle(.white.opacity(0.92))
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
-                    .background(Theme.borderStrong, in: Rectangle())
+                    .background(Color.black.opacity(0.28), in: RoundedRectangle(cornerRadius: 3, style: .continuous))
             }
         }
         .minimumScaleFactor(0.75)

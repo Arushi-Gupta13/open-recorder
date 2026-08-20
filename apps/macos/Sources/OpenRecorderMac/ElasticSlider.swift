@@ -44,7 +44,7 @@ struct ElasticSlider: View {
             ZStack {
                 // Background Track Bar with fully rounded capsule container
                 ZStack(alignment: .leading) {
-                    // Outer track container: seamless dark dark grey (close to black)
+                    // Outer track container: seamless dark grey
                     Capsule(style: .continuous)
                         .fill(Color.black.opacity(0.38))
                         .overlay {
@@ -62,7 +62,7 @@ struct ElasticSlider: View {
 
                 // Sliding Fully Rounded Pill Tab Handle
                 Capsule(style: .continuous)
-                    .fill(thumbColor)
+                    .fill(Color.white)
                     .frame(width: resolvedThumbWidth, height: resolvedThumbHeight)
                     .overlay {
                         Capsule(style: .continuous)
@@ -124,8 +124,8 @@ struct ElasticSlider: View {
 
                 if dotX > thumbRightThreshold {
                     Circle()
-                        .fill(Color.white.opacity(0.24))
-                        .frame(width: 4, height: 4)
+                        .fill(Color.white.opacity(0.14))
+                        .frame(width: 2.5, height: 2.5)
                         .position(x: dotX, y: trackHeight / 2)
                 }
             }

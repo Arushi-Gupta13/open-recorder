@@ -16,10 +16,6 @@ struct TimelineSelectionSidebar: View {
                 .padding(12)
             }
 
-            Rectangle()
-                .fill(Theme.border)
-                .frame(height: 1)
-
             selectionFooter
         }
         .studioEditorPaneChrome()

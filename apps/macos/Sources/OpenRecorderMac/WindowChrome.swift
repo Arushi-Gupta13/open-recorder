@@ -362,16 +362,8 @@ final class WindowConfigurationView: NSView {
 
     private func syncHUDToActiveSpace(_ window: NSWindow) {
         guard role == .hud, window.isVisible else { return }
-        let size = HUDWindowMetrics.clampedSize(
-            for: preferredSize ?? window.contentRect(forFrameRect: window.frame).size,
-            screen: window.screen ?? NSScreen.main
-        )
         window.collectionBehavior = HUDWindowChrome.collectionBehavior
         window.level = HUDWindowChrome.level
-        window.setContentSize(size)
-        window.minSize = size
-        window.maxSize = size
-        positionBottomCenter(window, contentSize: size)
         window.orderFrontRegardless()
     }
 }
@@ -565,5 +557,6 @@ struct HUDOverlayWindowView: View {
         CaptureHUD(options: model.captureOptions)
             .padding(.horizontal, 16)
             .padding(.vertical, 18)
+            .frame(width: HUDWindowMetrics.defaultSize.width, height: HUDWindowMetrics.defaultSize.height)
     }
 }

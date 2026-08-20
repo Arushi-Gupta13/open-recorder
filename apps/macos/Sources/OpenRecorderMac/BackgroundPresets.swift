@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import CoreGraphics
 import Foundation
 import SwiftUI
@@ -78,13 +79,21 @@ struct WallpaperPreset: Identifiable, Equatable, Hashable, Codable {
     var label: String
     var fullAssetName: String
     var thumbAssetName: String
+    var customURL: URL? = nil
+    var isVideo: Bool = false
 
     var fullURL: URL? {
-        OpenRecorderResources.url(forResource: fullAssetName, withExtension: "jpg", subdirectory: "Wallpapers")
+        if let customURL { return customURL }
+        if isVideo, let videoURL = OpenRecorderResources.url(forResource: fullAssetName, withExtension: "mp4", subdirectory: "Wallpapers") {
+            return videoURL
+        }
+        return OpenRecorderResources.url(forResource: fullAssetName, withExtension: "jpg", subdirectory: "Wallpapers")
     }
 
     var thumbURL: URL? {
-        OpenRecorderResources.url(forResource: thumbAssetName, withExtension: "jpg", subdirectory: "Wallpapers/thumbs")
+        if let customURL { return customURL }
+        return OpenRecorderResources.url(forResource: thumbAssetName, withExtension: "jpg", subdirectory: "Wallpapers/thumbs")
+            ?? OpenRecorderResources.url(forResource: thumbAssetName, withExtension: "jpg", subdirectory: "Wallpapers")
     }
 }
 
@@ -384,11 +393,19 @@ enum BackgroundPresets {
         )
     }
 
+    static let videoLoops: [WallpaperPreset] = [
+        WallpaperPreset(id: "loop-aurora", label: "Aurora", fullAssetName: "wallpaper1", thumbAssetName: "wallpaper1", isVideo: true),
+        WallpaperPreset(id: "loop-particles", label: "Particles", fullAssetName: "wallpaper2", thumbAssetName: "wallpaper2", isVideo: true),
+        WallpaperPreset(id: "loop-cyber", label: "Cyber Neon", fullAssetName: "wallpaper3", thumbAssetName: "wallpaper3", isVideo: true),
+        WallpaperPreset(id: "loop-mesh", label: "Gradient Mesh", fullAssetName: "wallpaper4", thumbAssetName: "wallpaper4", isVideo: true)
+    ]
+
     static let `default`: BackgroundStyle = .wallpaper(wallpapers[0])
 }
 
 enum BackgroundStylePresetKind: String, CaseIterable, Identifiable {
     case wallpaper
+    case video
     case color
     case gradient
     case transparent
@@ -397,19 +414,41 @@ enum BackgroundStylePresetKind: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .gradient: "Gradient"
-        case .color: "Solid"
         case .wallpaper: "Image"
-        case .transparent: "Transparent"
+        case .video: "Video"
+        case .color: "Color"
+        case .gradient: "Gradient"
+        case .transparent: "None"
+        }
+    }
+
+    var helpText: String {
+        switch self {
+        case .wallpaper: "Image Wallpapers"
+        case .video: "Video Loops"
+        case .color: "Solid Colors"
+        case .gradient: "Gradients"
+        case .transparent: "Transparent (No background)"
         }
     }
 
     var symbolName: String {
         switch self {
-        case .gradient: "circle.lefthalf.filled.righthalf.striped.horizontal"
-        case .color: "circle.fill"
         case .wallpaper: "photo"
+        case .video: "video.fill"
+        case .color: "paintpalette.fill"
+        case .gradient: "circle.lefthalf.filled.righthalf.striped.horizontal"
         case .transparent: "square.dashed"
+        }
+    }
+
+    var accentColor: Color {
+        switch self {
+        case .wallpaper: Color(red: 0.28, green: 0.58, blue: 1.00)  // Sky Blue
+        case .video: Color(red: 0.68, green: 0.42, blue: 1.00)      // Vivid Purple
+        case .color: Color(red: 1.00, green: 0.62, blue: 0.22)      // Amber Orange
+        case .gradient: Color(red: 1.00, green: 0.38, blue: 0.68)   // Rose Pink
+        case .transparent: Color(red: 0.70, green: 0.74, blue: 0.82) // Slate
         }
     }
 }
@@ -420,7 +459,7 @@ extension BackgroundStyle {
         case .transparent: .transparent
         case .solid: .color
         case .gradient: .gradient
-        case .wallpaper: .wallpaper
+        case let .wallpaper(preset): preset.isVideo ? .video : .wallpaper
         }
     }
 }
@@ -488,9 +527,19 @@ enum WallpaperImageCache {
         if let cached = storage.imageCache.object(forKey: key) {
             return cached
         }
-        guard let image = NSImage(contentsOf: url) else { return nil }
-        storage.imageCache.setObject(image, forKey: key)
-        return image
+        if let image = NSImage(contentsOf: url) {
+            storage.imageCache.setObject(image, forKey: key)
+            return image
+        }
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        if let cg = try? generator.copyCGImage(at: .zero, actualTime: nil) {
+            let image = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
+            storage.imageCache.setObject(image, forKey: key)
+            return image
+        }
+        return nil
     }
 
     static func cgImage(for url: URL) -> CGImage? {
