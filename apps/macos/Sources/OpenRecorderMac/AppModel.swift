@@ -483,6 +483,24 @@ final class AppModel: ObservableObject {
                 self?.objectWillChange.send()
             }
         )
+        NotificationCenter.default.addObserver(
+            forName: AVCaptureDevice.wasConnectedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.captureOptions.send(.refreshDevicesRequested)
+            }
+        }
+        NotificationCenter.default.addObserver(
+            forName: AVCaptureDevice.wasDisconnectedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.captureOptions.send(.refreshDevicesRequested)
+            }
+        }
         appShell.onboarding.configure(
             currentPermissions: { [weak self] in
                 guard let self else { return (.requestAvailable, .requestAvailable) }
