@@ -32,6 +32,8 @@ struct SettingsInspector: View {
     @State private var hoveredTab: InspectorTab?
     @State private var isInsetBalanceExpanded = false
     @State private var removeCameraBackground = false
+    @AppStorage("recording.mouseClickSoundsEnabled") private var mouseClickSoundsEnabled: Bool = false
+    @AppStorage("recording.keyboardSoundsEnabled") private var keyboardSoundsEnabled: Bool = false
     private let insetBalanceScrollID = "inset-balance-accordion"
 
     private var hasRecordedCamera: Bool {
@@ -230,6 +232,19 @@ struct SettingsInspector: View {
                 InspectorSwitch(title: "Loop Cursor", isOn: $loopCursor)
                 InspectorSlider(title: "Size", valueText: String(format: "%.2fx", cursorSize), value: $cursorSize, range: 1...8, step: 0.05, defaultValue: 1, leadingSymbolName: "cursorarrow", trailingSymbolName: "cursorarrow.rays")
                 InspectorSlider(title: "Smoothing", valueText: String(format: "%.2f", cursorSmoothing), value: $cursorSmoothing, range: 0...2, step: 0.01, defaultValue: 0.45, leadingSymbolName: "point.topleft.down.curvedto.point.bottomright.up", trailingSymbolName: "waveform.path.ecg")
+            }
+            InspectorGroup(
+                title: "Audio Feedback",
+                symbolName: "waveform",
+                onReset: {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        mouseClickSoundsEnabled = false
+                        keyboardSoundsEnabled = false
+                    }
+                }
+            ) {
+                InspectorSwitch(title: "Mouse Click Sounds", isOn: $mouseClickSoundsEnabled)
+                InspectorSwitch(title: "Typing Keystroke Sounds", isOn: $keyboardSoundsEnabled)
             }
         case .camera:
             if hasRecordedCamera, cameraSettings != nil {

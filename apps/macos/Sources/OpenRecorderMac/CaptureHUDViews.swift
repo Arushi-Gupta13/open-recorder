@@ -210,30 +210,6 @@ struct CaptureHUD: View {
         systemAudioToggle
         microphoneToggle
         cameraToggle
-        mouseClickSoundsToggle
-        keyboardSoundsToggle
-    }
-
-    private var mouseClickSoundsToggle: some View {
-        HUDToggle(
-            symbolName: model.mouseClickSoundsEnabled ? "hand.tap.fill" : "hand.tap",
-            isActive: model.mouseClickSoundsEnabled,
-            title: model.mouseClickSoundsEnabled ? "Click Sounds On" : "Click Sounds Off",
-            isDisabled: !options.state.canChangeOptions
-        ) {
-            model.mouseClickSoundsEnabled.toggle()
-        }
-    }
-
-    private var keyboardSoundsToggle: some View {
-        HUDToggle(
-            symbolName: model.keyboardSoundsEnabled ? "keyboard.fill" : "keyboard",
-            isActive: model.keyboardSoundsEnabled,
-            title: model.keyboardSoundsEnabled ? "Keyboard Sounds On" : "Keyboard Sounds Off",
-            isDisabled: !options.state.canChangeOptions
-        ) {
-            model.keyboardSoundsEnabled.toggle()
-        }
     }
 
     private var systemAudioToggle: some View {
