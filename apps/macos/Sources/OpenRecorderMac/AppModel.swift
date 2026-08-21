@@ -571,6 +571,20 @@ final class AppModel: ObservableObject {
             nil,
             preferredSourceKind: storedCaptureSetup.preferredSourceKind
         ))
+        NotificationCenter.default.addObserver(
+            forName: AVCaptureDevice.wasConnectedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.refreshCaptureDevices()
+        }
+        NotificationCenter.default.addObserver(
+            forName: AVCaptureDevice.wasDisconnectedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.refreshCaptureDevices()
+        }
     }
 
     private func configureEditorWorkspace(_ workspace: EditorWorkspaceDriver) {
