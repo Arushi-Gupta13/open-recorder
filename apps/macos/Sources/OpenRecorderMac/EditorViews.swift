@@ -133,19 +133,20 @@ struct VideoEditorStudioView: View {
     private let timelineHeight = TimelineMetrics.compactPanelHeight
 
     var body: some View {
-        ResizableStudioSplitPane(
-            secondarySize: $sidebarWidth,
+        StudioSplitPane(
+            axis: .horizontal,
+            secondarySize: sidebarWidth,
             minPrimarySize: 520,
             minSecondarySize: 280,
-            maxSecondarySize: 440
+            maxSecondarySize: 440,
+            spacing: 0
         ) {
             editorColumn
         } secondary: {
             sidebarContent
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(16)
-        .background(Theme.appBgMuted)
+        .background(Theme.appBg)
         .sheet(item: editor.activeSheetBinding(exportIsBusy: videoExport.state.phase.isBusy)) { sheet in
             switch sheet {
             case .export:
@@ -209,7 +210,8 @@ struct VideoEditorStudioView: View {
             secondarySize: timelineHeight,
             minPrimarySize: 260,
             minSecondarySize: TimelineMetrics.compactPanelHeight,
-            maxSecondarySize: TimelineMetrics.compactPanelHeight
+            maxSecondarySize: TimelineMetrics.compactPanelHeight,
+            spacing: 0
         ) {
             VideoPreviewPanel(
                 videoURL: videoURL,

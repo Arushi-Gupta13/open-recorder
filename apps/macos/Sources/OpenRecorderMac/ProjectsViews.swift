@@ -25,7 +25,7 @@ struct ProjectsStudioView: View {
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 4)
-                                .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                                .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
                         }
                         Text("Open saved captures from this device.")
                             .font(.system(size: 13))
@@ -469,7 +469,7 @@ struct ProjectListRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
                                 .overlay {
-                                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
                                         .stroke(Color.red.opacity(0.35))
                                 }
                         }
@@ -526,9 +526,9 @@ struct EmptyProjectsPanel: View {
             Text(tab == .screenRecordings ? "Screen recording projects will appear here after you save or open one." : "Screenshot projects will appear here after you capture or open one.")
         }
         .frame(maxWidth: .infinity, minHeight: 240)
-        .background(Theme.surface.opacity(0.60), in: RoundedRectangle(cornerRadius: 10))
+        .background(Theme.surface.opacity(0.60), in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                 .stroke(Theme.border, style: StrokeStyle(lineWidth: 1, dash: [5, 5]))
         }
     }
@@ -597,7 +597,7 @@ private struct ProjectLibraryFailureBanner: View {
                 .disabled(false)
         }
         .padding(10)
-        .background(Theme.overlay, in: RoundedRectangle(cornerRadius: 8))
+        .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
         .accessibilityElement(children: .contain)
     }
 }

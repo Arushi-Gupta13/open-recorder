@@ -237,7 +237,7 @@ private struct WorkspaceAutosaveFailureBanner: View {
 
             Spacer(minLength: 12)
 
-            StudioButton(hitTarget: .rounded(7), action: retry) {
+            StudioButton(hitTarget: .rectangle, action: retry) {
                 HStack(spacing: 6) {
                     if isRetrying {
                         ProgressView()
@@ -250,7 +250,7 @@ private struct WorkspaceAutosaveFailureBanner: View {
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Theme.overlayStrong, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(Theme.overlayStrong, in: Rectangle())
             }
             .disabled(isRetrying)
         }
@@ -269,37 +269,21 @@ struct StudioNavBar: View {
     var selectedSection: AppSection
     var isScreenshotEditor: Bool
     var onSelectSection: (AppSection) -> Void
-    var onToggleHelp: () -> Void
 
-    private let items: [AppSection] = [.editor, .projects]
+    private let items: [AppSection] = [.projects]
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 6) {
             ForEach(items) { section in
-                StudioNavButton(
+                StudioIconNavButton(
                     title: section.title,
-                    symbolName: navSymbol(for: section),
-                    isActive: selectedSection == section
+                    symbolName: navSymbol(for: section)
                 ) {
                     onSelectSection(section)
                 }
             }
-
-            Rectangle()
-                .fill(Theme.borderStrong.opacity(0.40))
-                .frame(width: 1, height: 18)
-                .padding(.horizontal, 2)
-
-            StudioIconNavButton(title: "Keyboard Shortcuts", symbolName: "questionmark") {
-                onToggleHelp()
-            }
         }
-        .padding(3)
-        .background(Theme.surface.opacity(0.85), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                .stroke(Theme.borderStrong.opacity(0.70), lineWidth: 1)
-        }
+        .frame(height: 32)
     }
 
     private func navSymbol(for section: AppSection) -> String {
@@ -320,37 +304,18 @@ struct StudioNavButton: View {
     @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: title, action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: symbolName)
-                    .font(.system(size: Theme.iconSm, weight: .semibold))
-                    .frame(width: 16, height: 16)
-                Text(title)
-                    .font(.system(size: 12, weight: isActive ? .semibold : .medium))
-                    .lineLimit(1)
-            }
-            .frame(height: 28)
-            .padding(.horizontal, 10)
-            .foregroundStyle(isActive ? Color.white : Theme.fgMuted)
-            .background {
-                if isActive {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                        .fill(Theme.accent)
-                        .overlay {
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.18), Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-                        }
-                        .shadow(color: Theme.accent.opacity(0.32), radius: 6, y: 2)
-                } else if isHovering {
-                    RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
-                }
-            }
+        Button(action: action) {
+            Image(systemName: symbolName)
+                .font(.system(size: 13, weight: isActive ? .bold : .medium))
+                .frame(width: 26, height: 26)
+                .foregroundStyle(isActive ? Color.white : (isHovering ? Color.white : Theme.fgMuted))
+                .animation(.snappy(duration: 0.16), value: isHovering)
+                .animation(.snappy(duration: 0.18), value: isActive)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .help(title)
+        .accessibilityLabel(title)
         .onHover { hovering in
             isHovering = hovering
         }
@@ -364,13 +329,15 @@ struct StudioIconNavButton: View {
     @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(Theme.radiusSm), help: title, action: action) {
+        Button(action: action) {
             Image(systemName: symbolName)
                 .font(.system(size: 11, weight: .bold))
-                .frame(width: 26, height: 28)
-                .foregroundStyle(Theme.fgMuted)
-                .background(isHovering ? Color.white.opacity(0.06) : Color.clear, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
+                .foregroundStyle(isHovering ? Color.white : Theme.fgMuted)
+                .frame(width: 26, height: 26)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .help(title)
         .onHover { hovering in
             isHovering = hovering
         }
@@ -382,21 +349,27 @@ struct EditorHistoryButton: View {
     var symbolName: String
     var isEnabled: Bool
     var action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rounded(6), help: title, action: action) {
+        Button(action: action) {
             Image(systemName: symbolName)
-                .font(.system(size: 12, weight: .semibold))
-                .frame(width: 28, height: 28)
-                .foregroundStyle(isEnabled ? Color.primary.opacity(0.86) : Color.secondary.opacity(0.38))
-                .background(isEnabled ? Theme.overlayStrong.opacity(0.82) : Color.clear, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(isEnabled ? Theme.borderSubtle : Color.clear, lineWidth: 1)
-                }
+                .font(.system(size: 12.5, weight: .semibold))
+                .frame(width: 26, height: 26)
+                .foregroundStyle(
+                    isEnabled
+                        ? (isHovering ? Color.white : Theme.fgMuted)
+                        : Theme.fgDisabled
+                )
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .disabled(!isEnabled)
+        .help(title)
         .accessibilityLabel(title)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
 }
 
@@ -404,24 +377,22 @@ struct StudioTitleBar: View {
     @EnvironmentObject private var model: AppModel
     var editorSession: EditorSession?
     var workspace: EditorWorkspaceDriver
+    @State private var isTitleHovered = false
 
     var body: some View {
         ZStack {
             HStack(spacing: 12) {
-                StudioNavBar(
-                    selectedSection: workspace.state.selectedSection,
-                    isScreenshotEditor: editorMediaKind == .screenshot,
-                    onSelectSection: { section in
-                        workspace.send(.sectionSelected(section))
-                    },
-                    onToggleHelp: {
-                        workspace.send(.shortcutsHelpToggled)
-                    }
-                )
-
                 Spacer(minLength: 0)
 
                 HStack(spacing: 8) {
+                    StudioNavBar(
+                        selectedSection: workspace.state.selectedSection,
+                        isScreenshotEditor: editorMediaKind == .screenshot,
+                        onSelectSection: { section in
+                            workspace.send(.sectionSelected(section))
+                        }
+                    )
+
                     editorHistoryControls
                     exportButton
                 }
@@ -430,7 +401,6 @@ struct StudioTitleBar: View {
             titleLabel
                 .frame(maxWidth: 520)
                 .padding(.horizontal, 190)
-                .allowsHitTesting(false)
         }
         .frame(height: 52)
         .padding(.horizontal, 12)
@@ -439,18 +409,13 @@ struct StudioTitleBar: View {
                 Rectangle()
                     .fill(.ultraThinMaterial)
                 Rectangle()
-                    .fill(Theme.surface.opacity(0.90))
+                    .fill(Theme.navbarBg.opacity(0.92))
                 LinearGradient(
                     colors: [Color.white.opacity(0.045), Color.clear],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             }
-        }
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Theme.borderStrong.opacity(0.56))
-                .frame(height: 1)
         }
         .simultaneousGesture(
             TapGesture().onEnded {
@@ -470,56 +435,85 @@ struct StudioTitleBar: View {
                     workspace.redoActiveEditor(kind: editorMediaKind)
                 }
             }
-            .padding(3)
-            .background(Theme.overlay.opacity(0.88), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                    .stroke(Theme.borderSubtle, lineWidth: 1)
-            }
         }
     }
 
     @ViewBuilder
     private var exportButton: some View {
         if workspace.state.selectedSection == .editor, let videoURL {
-            StudioButton(hitTarget: .rounded(Theme.radiusMd)) {
-                workspace.send(.videoExportRequested(videoURL, editorSessionID: editorSession?.id))
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.up.right.video.fill")
-                        .font(.system(size: Theme.iconSm, weight: .semibold))
-                    Text("Export Video")
+            HStack(spacing: 6) {
+                StudioIconNavButton(title: "Keyboard Shortcuts", symbolName: "questionmark") {
+                    workspace.send(.shortcutsHelpToggled)
+                }
+
+                Menu {
+                    Button("16:9 Widescreen (YouTube, Desktop)") {
+                        workspace.video.send(.previewAspectChanged(.wide))
+                    }
+                    Button("9:16 Vertical (Reels, TikTok, Shorts)") {
+                        workspace.video.send(.previewAspectChanged(.vertical))
+                    }
+                    Button("1:1 Square (Instagram, Feed)") {
+                        workspace.video.send(.previewAspectChanged(.square))
+                    }
+                    Button("4:5 Portrait (Social Post)") {
+                        workspace.video.send(.previewAspectChanged(.portrait))
+                    }
+                    Button("4:3 Classic") {
+                        workspace.video.send(.previewAspectChanged(.classic))
+                    }
+                    Divider()
+                    Button("Source Aspect (Auto)") {
+                        workspace.video.send(.previewAspectChanged(.auto))
+                    }
+                } label: {
+                    Image(systemName: "aspectratio")
                         .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Theme.fg)
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
-                .padding(.horizontal, 14)
-                .frame(height: Theme.btnHeightMd)
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
-                .foregroundStyle(Color.white)
-                .overlay {
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .help("Presets")
+
+                StudioButton(hitTarget: .rounded(6)) {
+                    workspace.send(.videoExportRequested(videoURL, editorSessionID: editorSession?.id))
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "arrow.up.right.video.fill")
+                            .font(.system(size: 10.5, weight: .bold))
+                        Text("Export")
+                            .font(.system(size: 11.5, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .foregroundStyle(Color.black)
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
                 }
-                .shadow(color: Theme.accent.opacity(0.35), radius: 10, y: 3)
             }
         } else if workspace.state.selectedSection == .editor, screenshotURL != nil {
-            StudioButton(hitTarget: .rounded(Theme.radiusMd)) {
-                workspace.send(.screenshotExportRequested(screenshotURL, editorSessionID: editorSession?.id))
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.up.fill")
-                        .font(.system(size: Theme.iconSm, weight: .semibold))
-                    Text("Export PNG")
-                        .font(.system(size: 12, weight: .semibold))
+            HStack(spacing: 6) {
+                StudioIconNavButton(title: "Keyboard Shortcuts", symbolName: "questionmark") {
+                    workspace.send(.shortcutsHelpToggled)
                 }
-                .padding(.horizontal, 14)
-                .frame(height: Theme.btnHeightMd)
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
-                .foregroundStyle(Color.white)
-                .overlay {
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .stroke(Color.white.opacity(0.22), lineWidth: 1)
+
+                StudioButton(hitTarget: .rounded(6)) {
+                    workspace.send(.screenshotExportRequested(screenshotURL, editorSessionID: editorSession?.id))
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .font(.system(size: 10.5, weight: .bold))
+                        Text("Export")
+                            .font(.system(size: 11.5, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .foregroundStyle(Color.black)
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
                 }
-                .shadow(color: Theme.accent.opacity(0.35), radius: 10, y: 3)
             }
         }
     }
@@ -533,20 +527,23 @@ struct StudioTitleBar: View {
     }
 
     private var titleLabel: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 6) {
             if workspace.state.selectedSection == .editor, let editorMediaKind {
                 Image(systemName: editorMediaKind.titleIconSystemName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.fgMuted.opacity(0.55))
                     .accessibilityHidden(true)
             }
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isTitleHovered ? Color.white : Theme.fgMuted.opacity(0.65))
                 .lineLimit(1)
                 .truncationMode(.middle)
             workspaceStatusIndicator
         }
         .frame(maxWidth: .infinity, alignment: .center)
+        .contentShape(Rectangle())
+        .onHover { isTitleHovered = $0 }
     }
 
     @ViewBuilder

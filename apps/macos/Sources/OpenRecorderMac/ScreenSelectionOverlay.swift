@@ -174,10 +174,10 @@ private struct ScreenSelectionOverlayView: View {
                 .rectangularHitTarget()
                 .onTapGesture(perform: onCancel)
 
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous)
                 .fill(overlayColor.opacity(0.18))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous)
                         .stroke(Color.white.opacity(0.74), lineWidth: 3)
                 }
                 .padding(18)
@@ -208,9 +208,9 @@ private struct ScreenSelectionOverlayView: View {
             }
             .padding(.horizontal, Theme.space6)
             .padding(.vertical, Theme.space6)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous))
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous)
+                RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                     .stroke(Color.white.opacity(0.26), lineWidth: 1)
             }
         }

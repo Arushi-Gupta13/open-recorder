@@ -10,6 +10,7 @@ enum NativeWindowRole {
     case sourceSelector
     case microphoneSelector
     case cameraSelector
+    case cameraBubble
     case areaSelector
     case studio
 }
@@ -46,6 +47,8 @@ struct WindowConfigurator: NSViewRepresentable {
 }
 
 final class WindowConfigurationView: NSView {
+    override var isFlipped: Bool { true }
+
     var role: NativeWindowRole = .studio {
         didSet {
             if role != oldValue {
@@ -116,6 +119,8 @@ final class WindowConfigurationView: NSView {
             configureMicrophoneSelector(window)
         case .cameraSelector:
             configureCameraSelector(window)
+        case .cameraBubble:
+            configureCameraBubble(window)
         case .areaSelector:
             configureAreaSelector(window)
         case .studio:
@@ -123,15 +128,42 @@ final class WindowConfigurationView: NSView {
         }
     }
 
+    private func configureCameraBubble(_ window: NSWindow) {
+        window.title = "Camera Preview"
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.level = .floating
+        window.collectionBehavior = [
+            .canJoinAllSpaces,
+            .fullScreenAuxiliary,
+            .stationary
+        ]
+        window.isMovableByWindowBackground = true
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.styleMask.insert([.fullSizeContentView, .resizable])
+        [.closeButton, .miniaturizeButton, .zoomButton].forEach { button in
+            window.standardWindowButton(button)?.isHidden = true
+        }
+        if window.frame.origin.y < 50 || window.frame.origin == .zero {
+            if let screen = window.screen ?? NSScreen.main {
+                let visibleFrame = screen.visibleFrame
+                let windowSize = window.frame.size
+                let origin = CGPoint(
+                    x: visibleFrame.maxX - windowSize.width - 32,
+                    y: visibleFrame.maxY - windowSize.height - 32
+                )
+                window.setFrameOrigin(origin)
+            }
+        }
+        window.orderFrontRegardless()
+    }
+
     private func configureHUD(_ window: NSWindow) {
-        let size = HUDWindowMetrics.clampedSize(
-            for: preferredSize ?? HUDWindowMetrics.defaultSize,
-            screen: window.screen ?? NSScreen.main
-        )
+        let size = HUDWindowMetrics.defaultSize
         window.title = "Open Recorder"
         window.setContentSize(size)
-        window.minSize = size
-        window.maxSize = size
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -145,7 +177,9 @@ final class WindowConfigurationView: NSView {
         [.closeButton, .miniaturizeButton, .zoomButton].forEach { button in
             window.standardWindowButton(button)?.isHidden = true
         }
-        positionBottomCenter(window, contentSize: size)
+        if window.frame.origin.y < 30 || window.frame.origin == .zero {
+            positionBottomCenter(window, contentSize: size)
+        }
         startSyncingHUDToActiveSpace(for: window)
         window.orderFrontRegardless()
     }
@@ -190,6 +224,8 @@ final class WindowConfigurationView: NSView {
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
         window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func configureMicrophoneSelector(_ window: NSWindow) {
@@ -326,16 +362,8 @@ final class WindowConfigurationView: NSView {
 
     private func syncHUDToActiveSpace(_ window: NSWindow) {
         guard role == .hud, window.isVisible else { return }
-        let size = HUDWindowMetrics.clampedSize(
-            for: preferredSize ?? window.contentRect(forFrameRect: window.frame).size,
-            screen: window.screen ?? NSScreen.main
-        )
         window.collectionBehavior = HUDWindowChrome.collectionBehavior
         window.level = HUDWindowChrome.level
-        window.setContentSize(size)
-        window.minSize = size
-        window.maxSize = size
-        positionBottomCenter(window, contentSize: size)
         window.orderFrontRegardless()
     }
 }
@@ -374,6 +402,8 @@ struct SourceSelectorWindowSizer: NSViewRepresentable {
 }
 
 final class SourceSelectorWindowSizingView: NSView {
+    override var isFlipped: Bool { true }
+
     var preferredContentSize: CGSize = .zero
 
     override func viewDidMoveToWindow() {
@@ -417,6 +447,7 @@ struct WindowCommandBridge: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
     var shell: AppShellDriver
+    var isCameraEnabled: () -> Bool = { false }
 
     var body: some View {
         Color.clear
@@ -475,11 +506,16 @@ struct WindowCommandBridge: View {
         case .showCameraSelector:
             NSApp.unhide(nil)
             openWindow(id: "camera-selector")
+        case .showCameraBubble:
+            openWindow(id: "camera-bubble")
+        case .closeCameraBubble:
+            dismissWindow(id: "camera-bubble")
         case .showAreaSelector:
             NSApp.unhide(nil)
             openWindow(id: "area-selector")
         case .showStudio:
             NSApp.unhide(nil)
+            dismissCaptureWindows(alwaysDismissCameraBubble: true)
             if let editorSession = command.editorSession {
                 openWindow(id: "editor", value: editorSession)
             } else {
@@ -500,17 +536,22 @@ struct WindowCommandBridge: View {
         }
     }
 
-    private func dismissCaptureWindows() {
+    private func dismissCaptureWindows(alwaysDismissCameraBubble: Bool = false) {
         dismissWindow(id: "hud")
         dismissWindow(id: "source-selector")
         dismissWindow(id: "area-selector")
         dismissWindow(id: "microphone-selector")
         dismissWindow(id: "camera-selector")
+        if alwaysDismissCameraBubble || !isCameraEnabled() {
+            dismissWindow(id: "camera-bubble")
+        }
     }
 
     private func hideAppWindowsForCapture() {
         dismissCaptureWindows()
-        NSApp.hide(nil)
+        if !isCameraEnabled() {
+            NSApp.hide(nil)
+        }
     }
 }
 
@@ -521,5 +562,6 @@ struct HUDOverlayWindowView: View {
         CaptureHUD(options: model.captureOptions)
             .padding(.horizontal, 16)
             .padding(.vertical, 18)
+            .frame(width: HUDWindowMetrics.defaultSize.width, height: HUDWindowMetrics.defaultSize.height)
     }
 }

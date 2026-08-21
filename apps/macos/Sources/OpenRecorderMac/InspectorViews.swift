@@ -26,14 +26,11 @@ struct SettingsInspector: View {
     @Binding var cursorStyleID: CursorStyleID
     var recordingSession: RecordingSession?
 
+    @Namespace private var tabRailAnimation
     @State private var activeTab: InspectorTab = .appearance
     @State private var hoveredTab: InspectorTab?
     @State private var isInsetBalanceExpanded = false
-
-    private let railWidth: CGFloat = 48
-    private let railButtonSize: CGFloat = 36
-    private let railButtonSpacing: CGFloat = 10
-    private let railVerticalPadding: CGFloat = 12
+    @State private var removeCameraBackground = false
     private let insetBalanceScrollID = "inset-balance-accordion"
 
     private var hasRecordedCamera: Bool {
@@ -45,78 +42,30 @@ struct SettingsInspector: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            inspectorRail
-            inspectorContent
-        }
-        .overlay(alignment: .topLeading) {
-            if let hoveredTab {
-                InspectorRailTooltip(title: hoveredTab.title)
-                    .frame(width: 0, alignment: .trailing)
-                    .offset(x: -10, y: railItemOffset(for: hoveredTab) + 4)
-                    .transition(.opacity)
-                    .zIndex(5)
+        inspectorContent
+            .studioEditorPaneChrome(bg: Theme.sidebarBg)
+            .onChange(of: showsInsetControls) { _, isVisible in
+                if !isVisible {
+                    isInsetBalanceExpanded = false
+                }
             }
-        }
-        .studioEditorPaneChrome(clipContent: false)
-        .animation(.snappy(duration: 0.14), value: hoveredTab?.id)
-        .onChange(of: showsInsetControls) { _, isVisible in
-            if !isVisible {
-                isInsetBalanceExpanded = false
-            }
-        }
     }
 
     private func openExternal(_ url: URL) {
         NSWorkspace.shared.open(url)
     }
 
-    private var inspectorRail: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(spacing: railButtonSpacing) {
-                ForEach(InspectorTab.availableCases) { tab in
-                    InspectorRailButton(
-                        tab: tab,
-                        isActive: activeTab == tab,
-                        size: railButtonSize
-                    ) {
-                        withAnimation(.snappy(duration: 0.22)) {
-                            activeTab = tab
-                        }
-                    } onHoverChanged: { isHovering in
-                        hoveredTab = isHovering ? tab : (hoveredTab == tab ? nil : hoveredTab)
-                    }
-                }
-            }
-            .padding(.vertical, railVerticalPadding)
-            .frame(width: railWidth)
-            .frame(maxHeight: .infinity, alignment: .top)
-        }
-        .frame(width: railWidth)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Theme.appBgMuted.opacity(0.54))
-        .overlay(alignment: .trailing) {
-            Rectangle()
-                .fill(Theme.borderStrong.opacity(0.44))
-                .frame(width: 1)
-        }
-    }
-
-    private func railItemOffset(for tab: InspectorTab) -> CGFloat {
-        let index = InspectorTab.availableCases.firstIndex(of: tab) ?? 0
-        return railVerticalPadding + CGFloat(index) * (railButtonSize + railButtonSpacing)
-    }
-
     private var inspectorContent: some View {
-        VStack(spacing: 0) {
+        HStack(spacing: 0) {
+            verticalIconRail
+
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        inspectorHeader
                         tabContent
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
                     .padding(.bottom, 18)
                     .animation(.snappy(duration: 0.34), value: activeTab.id)
                     .animation(.snappy(duration: 0.34), value: background.presetKind)
@@ -134,39 +83,80 @@ struct SettingsInspector: View {
                 }
                 .scrollIndicators(.visible)
             }
-
-            Rectangle()
-                .fill(Theme.borderStrong.opacity(0.44))
-                .frame(height: 1)
-
-            inspectorFooter
         }
     }
 
-    private var inspectorHeader: some View {
-        HStack(spacing: 8) {
-            Image(systemName: activeTab.symbolName)
-                .font(.system(size: Theme.iconMd, weight: .semibold))
-                .foregroundStyle(Theme.accent)
-            Text(activeTab.title)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color.white)
+    private var verticalIconRail: some View {
+        VStack(spacing: 12) {
+            ForEach(InspectorTab.railCases) { tab in
+                let isSelected = activeTab == tab
+                let isStubbed = tab.isStubbed
+
+                StudioButton(hitTarget: .rounded(Theme.radiusSm), help: tab.helpText) {
+                    guard !isStubbed else { return }
+                    withAnimation(.snappy(duration: 0.20)) {
+                        activeTab = tab
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: tab.symbolName)
+                            .font(.system(size: 16, weight: isSelected ? .bold : .medium))
+                            .foregroundStyle(
+                                isSelected
+                                    ? Color.white
+                                    : (isStubbed ? Theme.fgDisabled : (hoveredTab == tab ? Color.white : Theme.fgMuted))
+                            )
+                            .shadow(color: isSelected ? Color.white.opacity(0.35) : Color.clear, radius: 6, y: 1)
+                            .frame(width: 32, height: 26)
+
+                        Text(tab.shortTitle)
+                            .font(.system(size: 9.5, weight: isSelected ? .bold : .medium))
+                            .foregroundStyle(
+                                isSelected
+                                    ? Color.white
+                                    : (isStubbed ? Theme.fgDisabled : (hoveredTab == tab ? Color.white : Theme.fgMuted))
+                            )
+                            .lineLimit(1)
+                    }
+                    .frame(width: 46)
+                    .padding(.vertical, 4)
+                    .contentShape(Rectangle())
+                }
+                .disabled(isStubbed)
+                .onHover { hovering in
+                    hoveredTab = hovering ? tab : (hoveredTab == tab ? nil : hoveredTab)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            helpMenuButton
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.bottom, 16)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 2)
+        .frame(width: 50)
+        .background(Theme.railBg)
     }
 
-    private var inspectorFooter: some View {
-        HStack(spacing: 8) {
-            InspectorFooterButton(title: "Report Bug", symbolName: "ladybug") {
+    private var helpMenuButton: some View {
+        Menu {
+            Button("Report Bug…") {
                 openExternal(OpenRecorderLinks.issueChooser)
             }
-            InspectorFooterButton(title: "Star on GitHub", symbolName: "star") {
+            Button("Star on GitHub…") {
                 openExternal(OpenRecorderLinks.repository)
             }
+        } label: {
+            Image(systemName: "questionmark.circle")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Theme.fgMuted)
+                .frame(width: 32, height: 32)
+                .contentShape(Circle())
         }
-        .padding(12)
-        .background(Theme.surface.opacity(0.60))
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .frame(width: 32, height: 32)
+        .help("Help & Support")
     }
 
     @ViewBuilder
@@ -174,39 +164,96 @@ struct SettingsInspector: View {
         switch activeTab {
         case .appearance:
             BackgroundPickerView(selection: $background, showsTopDivider: false)
-            InspectorGroup(title: "Frame", symbolName: "rectangle.on.rectangle") {
+            InspectorGroup(
+                title: "Frame",
+                symbolName: "rectangle.on.rectangle",
+                onReset: {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        padding = 18
+                        borderRadius = 0
+                        backgroundBlur = 0
+                        shadow = 0.35
+                        removeCameraBackground = false
+                    }
+                }
+            ) {
                 InspectorSlider(title: "Padding", valueText: "\(Int(padding))%", value: $padding, range: 0...100, step: 1, defaultValue: 18, leadingSymbolName: "arrow.down.right.and.arrow.up.left", trailingSymbolName: "arrow.up.left.and.arrow.down.right")
+                InspectorSlider(title: "Radius", valueText: "\(Int(borderRadius))px", value: $borderRadius, range: 0...50, step: 1, defaultValue: 0, leadingSymbolName: "rectangle", trailingSymbolName: "app")
                 InspectorSlider(title: "Background Blur", valueText: String(format: "%.1fpx", backgroundBlur), value: $backgroundBlur, range: 0...8, step: 0.25, defaultValue: 0, leadingSymbolName: "camera.filters", trailingSymbolName: "drop.fill")
                 InspectorSlider(title: "Shadow", valueText: "\(Int(shadow * 100))%", value: $shadow, range: 0...1, step: 0.01, defaultValue: 0.35, leadingSymbolName: "circle", trailingSymbolName: "circle.fill")
+                InspectorSwitch(title: "Remove background", isOn: $removeCameraBackground)
             }
-            InspectorGroup(title: "Shape", symbolName: "rectangle.inset.filled") {
-                InspectorSlider(title: "Roundness", valueText: "\(Int(borderRadius))px", value: $borderRadius, range: 0...25, step: 0.5, defaultValue: 12, leadingSymbolName: "rectangle", trailingSymbolName: "app")
-            }
-            InspectorGroup(title: "Inset Styling", symbolName: "square.inset.filled") {
+            InspectorGroup(
+                title: "Inset Styling",
+                symbolName: "square.inset.filled",
+                isSecondary: true,
+                onReset: {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        inset = 0
+                        insetOpacity = 1
+                        insetColor = BackgroundPresets.solidColors[0]
+                    }
+                }
+            ) {
                 InspectorSlider(title: "Inset", valueText: "\(Int(inset.rounded()))", value: $inset, range: 0...100, step: 1, defaultValue: 0, leadingSymbolName: "rectangle", trailingSymbolName: "rectangle.inset.filled")
                 if showsInsetControls {
                     insetAdvancedControls
                 }
             }
         case .cursor:
-            InspectorGroup(title: "Cursor", symbolName: "cursorarrow", showsTopDivider: false) {
+            InspectorGroup(
+                title: "Cursor",
+                symbolName: "cursorarrow",
+                showsTopDivider: false,
+                onReset: {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        showCursor = true
+                        cursorStyleID = CursorStyleRegistry.defaultStyleID
+                    }
+                }
+            ) {
                 InspectorSwitch(title: "Show Cursor", isOn: $showCursor)
                 CursorStylePicker(selection: $cursorStyleID)
             }
-            InspectorGroup(title: "Motion", symbolName: "point.3.connected.trianglepath.dotted") {
+            InspectorGroup(
+                title: "Motion",
+                symbolName: "point.3.connected.trianglepath.dotted",
+                onReset: {
+                    withAnimation(.snappy(duration: 0.28)) {
+                        loopCursor = false
+                        cursorSize = 1
+                        cursorSmoothing = 0.45
+                    }
+                }
+            ) {
                 InspectorSwitch(title: "Loop Cursor", isOn: $loopCursor)
                 InspectorSlider(title: "Size", valueText: String(format: "%.2fx", cursorSize), value: $cursorSize, range: 1...8, step: 0.05, defaultValue: 1, leadingSymbolName: "cursorarrow", trailingSymbolName: "cursorarrow.rays")
                 InspectorSlider(title: "Smoothing", valueText: String(format: "%.2f", cursorSmoothing), value: $cursorSmoothing, range: 0...2, step: 0.01, defaultValue: 0.45, leadingSymbolName: "point.topleft.down.curvedto.point.bottomright.up", trailingSymbolName: "waveform.path.ecg")
             }
         case .camera:
             InspectorGroup(title: "Facecam", symbolName: "camera", showsTopDivider: false) {
-                Text(hasRecordedCamera ? "Timeline camera layer" : "No facecam recorded")
+                Text(hasRecordedCamera ? "Timeline camera layer active" : "No facecam recorded")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                InspectorSwitch(title: "Remove camera background", isOn: $removeCameraBackground)
             }
             if let path = recordingSession?.facecamVideoPath {
                 SessionAssetRow(title: "Facecam File", path: path)
+            }
+        case .captions:
+            InspectorGroup(title: "Captions", symbolName: "captions.bubble.fill", showsTopDivider: false) {
+                Text("Automatic AI speech-to-text captions coming soon.")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+            }
+        case .settings:
+            InspectorGroup(title: "Settings", symbolName: "gearshape.fill", showsTopDivider: false) {
+                Text("Export presets and canvas configuration.")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
             }
         case .audio:
             InspectorGroup(title: "Preview", symbolName: "speaker.wave.2", showsTopDivider: false) {
@@ -253,73 +300,7 @@ struct SessionAssetRow: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-struct InspectorRailButton: View {
-    var tab: InspectorTab
-    var isActive: Bool
-    var size: CGFloat
-    var action: () -> Void
-    var onHoverChanged: (Bool) -> Void
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                if isActive {
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .fill(Theme.accent.opacity(0.18))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                                .stroke(Theme.accent.opacity(0.40), lineWidth: 1)
-                        }
-                } else if isHovering {
-                    RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
-                }
-
-                Image(systemName: tab.symbolName)
-                    .font(.system(size: Theme.iconMd, weight: isActive ? .bold : .semibold))
-                    .foregroundStyle(isActive ? Theme.accent : Theme.fgMuted)
-            }
-            .frame(width: size, height: size)
-            .roundedHitTarget(Theme.radiusMd)
-            .animation(.snappy(duration: 0.14), value: isHovering)
-            .animation(.snappy(duration: 0.18), value: isActive)
-        }
-        .buttonStyle(.plain)
-        .help(tab.title)
-        .accessibilityLabel(tab.title)
-        .accessibilityValue(isActive ? "Selected" : "Not selected")
-        .accessibilityAddTraits(isActive ? .isSelected : [])
-        .onHover { hovering in
-            isHovering = hovering
-            onHoverChanged(hovering)
-        }
-    }
-}
-
-struct InspectorRailTooltip: View {
-    var title: String
-
-    var body: some View {
-        Text(title)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Theme.fg.opacity(0.94))
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .multilineTextAlignment(.trailing)
-            .padding(.horizontal, 9)
-            .frame(height: 28)
-            .background(Theme.surfaceRaised.opacity(0.96), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                    .stroke(Theme.borderStrong.opacity(0.72), lineWidth: 1)
-            }
-            .shadow(color: Color.black.opacity(0.28), radius: 10, y: 5)
-            .allowsHitTesting(false)
+        .background(Color.white.opacity(0.035), in: Rectangle())
     }
 }
 
@@ -355,32 +336,37 @@ struct InspectorFooterButton: View {
     }
 }
 
-enum InspectorTab: CaseIterable, Identifiable {
+enum InspectorTab: String, CaseIterable, Identifiable {
     case appearance
     case cursor
     case camera
+    case captions
+    case settings
     case audio
 
-    // Audio preview controls are not implemented yet. Keep the case for source
-    // and state compatibility, but do not advertise controls that cannot work.
     static let availableCases: [InspectorTab] = [.appearance, .cursor, .camera]
+    static let railCases: [InspectorTab] = [.appearance, .cursor, .camera, .captions, .settings]
 
-    var id: String { title }
+    var id: String { rawValue }
 
     var title: String {
         switch self {
         case .appearance: "Appearance"
         case .cursor: "Cursor"
         case .camera: "Camera"
+        case .captions: "Captions"
+        case .settings: "Settings"
         case .audio: "Audio"
         }
     }
 
-    var subtitle: String {
+    var shortTitle: String {
         switch self {
-        case .appearance: "Appearance"
+        case .appearance: "Frame"
         case .cursor: "Cursor"
         case .camera: "Camera"
+        case .captions: "Captions"
+        case .settings: "Settings"
         case .audio: "Audio"
         }
     }
@@ -390,38 +376,64 @@ enum InspectorTab: CaseIterable, Identifiable {
         case .appearance: "slider.horizontal.3"
         case .cursor: "cursorarrow"
         case .camera: "camera"
+        case .captions: "captions.bubble.fill"
+        case .settings: "gearshape.fill"
         case .audio: "speaker.wave.2"
+        }
+    }
+
+    var isStubbed: Bool {
+        switch self {
+        case .appearance, .cursor, .camera: false
+        case .captions, .settings, .audio: true
+        }
+    }
+
+    var helpText: String {
+        switch self {
+        case .appearance: "Appearance & Frame"
+        case .cursor: "Cursor Settings"
+        case .camera: "Camera & Facecam"
+        case .captions: "Captions (Coming Soon)"
+        case .settings: "Project Settings (Coming Soon)"
+        case .audio: "Audio Preview"
         }
     }
 }
 
 struct InspectorGroup<Content: View>: View {
     var title: String
-    var symbolName: String
-    var showsTopDivider = true
+    var symbolName: String? = nil
+    var showsTopDivider = false
+    var isSecondary = false
+    var onReset: (() -> Void)? = nil
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if showsTopDivider {
-                Rectangle()
-                    .fill(Theme.borderStrong.opacity(0.55))
-                    .frame(height: 1)
-            }
-
             HStack(spacing: 8) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.fg.opacity(0.94))
+                Text(title.uppercased())
+                    .font(.system(size: isSecondary ? 9.5 : 11, weight: isSecondary ? .semibold : .bold))
+                    .kerning(isSecondary ? 0.8 : 1.2)
+                    .foregroundStyle(isSecondary ? Theme.fgMuted.opacity(0.60) : Theme.fgSubtle)
+
                 Spacer(minLength: 0)
+
+                if let onReset {
+                    StudioButton(hitTarget: .rounded(Theme.radiusSm), action: onReset) {
+                        Text("Reset")
+                            .font(.system(size: isSecondary ? 10 : 11, weight: .medium))
+                            .foregroundStyle(isSecondary ? Theme.fgMuted.opacity(0.60) : Theme.fgSubtle)
+                    }
+                }
             }
-            .padding(.top, 18)
-            .padding(.bottom, 17)
+            .padding(.top, isSecondary ? 16 : 22)
+            .padding(.bottom, isSecondary ? 10 : 14)
 
             VStack(alignment: .leading, spacing: 12) {
                 content
             }
-            .padding(.bottom, 18)
+            .padding(.bottom, isSecondary ? 8 : 12)
         }
     }
 }
@@ -433,8 +445,8 @@ struct InspectorSlider: View {
     var range: ClosedRange<Double>
     var step: Double
     var defaultValue: Double?
-    var leadingSymbolName: String = "minus"
-    var trailingSymbolName: String = "plus"
+    var leadingSymbolName: String? = nil
+    var trailingSymbolName: String? = nil
     var onEditingChanged: (Bool) -> Void = { _ in }
 
     @State private var draftValueText = ""
@@ -442,42 +454,45 @@ struct InspectorSlider: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                if let leadingSymbolName, !leadingSymbolName.isEmpty {
+                    Image(systemName: leadingSymbolName)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.fgSubtle)
+                }
+
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Theme.fgMuted)
                     .lineLimit(1)
-                Spacer(minLength: 12)
+
+                Spacer(minLength: 8)
 
                 resetControl
-                    .frame(width: 44, alignment: .trailing)
 
                 valueInput
             }
-            .frame(height: 24)
+            .frame(height: 22)
 
-            HStack(spacing: 8) {
-                sliderIcon(leadingSymbolName)
-
-                ElasticSlider(
-                    value: $value,
-                    range: range,
-                    step: step,
-                    onEditingChanged: onEditingChanged,
-                    dragStep: intermediateStep,
-                    trackHeight: 7,
-                    hitHeight: 30,
-                    fillColor: Color.primary.opacity(0.92),
-                    dragFillColor: Color(red: 0.48, green: 0.48, blue: 0.50),
-                    setsValueFromPointerLocation: true
-                )
-                .accessibilityLabel(title)
-
-                sliderIcon(trailingSymbolName)
-            }
-            .frame(height: 30)
+            ElasticSlider(
+                value: $value,
+                range: range,
+                step: step,
+                valueText: displayValueText,
+                onEditingChanged: onEditingChanged,
+                dragStep: intermediateStep,
+                trackHeight: 22,
+                hitHeight: 22,
+                fillColor: Color.white.opacity(0.20),
+                thumbSize: 16,
+                showStepDots: true,
+                showTooltip: false,
+                setsValueFromPointerLocation: true
+            )
+            .accessibilityLabel(title)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
         .onAppear {
             draftValueText = displayValueText
         }
@@ -498,36 +513,29 @@ struct InspectorSlider: View {
     @ViewBuilder
     private var resetControl: some View {
         if let defaultValue, abs(value - defaultValue) > max(step / 2, 0.0001) {
-                    StudioButton(hitTarget: .rounded(5)) {
-                        withAnimation(.snappy(duration: 0.18)) {
-                            value = clamped(defaultValue)
-                        }
-                    } label: {
-                        Text("Reset")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Theme.fgSubtle)
-                    }
-        } else {
-            Color.clear
+            StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
+                withAnimation(.snappy(duration: 0.18)) {
+                    value = clamped(defaultValue)
+                }
+            } label: {
+                Text("Reset")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Theme.fgSubtle)
+            }
         }
     }
 
     private var valueInput: some View {
         TextField("", text: $draftValueText)
-            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-            .foregroundStyle(Theme.fg)
+            .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+            .foregroundStyle(isInputFocused ? Color.white : Theme.fgMuted)
             .monospacedDigit()
             .multilineTextAlignment(.trailing)
             .textFieldStyle(.plain)
             .focused($isInputFocused)
-            .frame(width: inputWidth)
-            .frame(height: 22)
-            .padding(.horizontal, 5)
-            .background(Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
-                    .stroke(isInputFocused ? Theme.accent.opacity(0.65) : Theme.borderSubtle, lineWidth: 1)
-            }
+            .padding(.horizontal, 2)
+            .padding(.vertical, 1)
+            .fixedSize(horizontal: true, vertical: false)
             .onSubmit(commitDraftValue)
     }
 
@@ -535,10 +543,6 @@ struct InspectorSlider: View {
         let span = range.upperBound - range.lowerBound
         guard span > 0 else { return step }
         return min(step, span / 200)
-    }
-
-    private var inputWidth: CGFloat {
-        38
     }
 
     private var displayValueText: String {
@@ -601,7 +605,7 @@ struct InsetColorPicker: View {
     @Binding var color: SerializableColor
 
     private let swatchSize: CGFloat = 28
-    private let swatchCornerRadius: CGFloat = 7
+    private let swatchCornerRadius: CGFloat = 5
 
     private var colorBinding: Binding<Color> {
         Binding(
@@ -625,7 +629,7 @@ struct InsetColorPicker: View {
                     .lineLimit(1)
                     .frame(width: 104, height: swatchSize, alignment: .leading)
                     .padding(.horizontal, 12)
-                    .background(Theme.appBgMuted.opacity(0.70), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(Theme.appBgMuted.opacity(0.70), in: Rectangle())
 
                 ScrollView(.horizontal) {
                     HStack(spacing: 7) {
@@ -671,7 +675,7 @@ struct InsetColorPicker: View {
                         .stroke(Color.white.opacity(0.86), lineWidth: 2)
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: swatchCornerRadius + 3, style: .continuous)
+                    RoundedRectangle(cornerRadius: swatchCornerRadius + 2, style: .continuous)
                         .stroke(Theme.borderStrong.opacity(0.74), lineWidth: 1)
                         .padding(-2)
                 }
@@ -682,7 +686,7 @@ struct InsetColorPicker: View {
     }
 
     private func colorSwatch(_ swatch: SerializableColor) -> some View {
-        StudioButton(hitTarget: .rounded(8)) {
+        StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
             color = swatch
         } label: {
             RoundedRectangle(cornerRadius: swatchCornerRadius, style: .continuous)
@@ -703,7 +707,7 @@ struct InsetBalanceAccordion<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            StudioButton(hitTarget: .rounded(8)) {
+            StudioButton(hitTarget: .rounded(Theme.radiusSm)) {
                 withAnimation(.snappy(duration: 0.28)) {
                     isExpanded.toggle()
                 }
@@ -720,7 +724,7 @@ struct InsetBalanceAccordion<Content: View>: View {
                         .foregroundStyle(Theme.fg.opacity(0.92))
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                         .frame(width: 28, height: 28)
-                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                 }
             }
             .buttonStyle(.plain)
@@ -740,7 +744,7 @@ struct InsetBalancePicker: View {
 
     private let knobSize: CGFloat = 24
     private let fieldHeight: CGFloat = 142
-    private let fieldCornerRadius: CGFloat = 18
+    private let fieldCornerRadius: CGFloat = 8
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -750,8 +754,8 @@ struct InsetBalancePicker: View {
                     .foregroundStyle(Theme.fgMuted)
                 Spacer()
                 Text(offsetText(for: balance.clamped))
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Theme.fg.opacity(0.92))
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.fgMuted)
             }
 
             GeometryReader { proxy in
@@ -959,10 +963,10 @@ struct CursorStyleButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.86))
-            .background(isSelected ? Theme.accent.opacity(0.82) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
+            .background(isSelected ? Color.white.opacity(0.18) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                    .stroke(isSelected ? Theme.accent.opacity(0.95) : Theme.overlay)
+                    .stroke(isSelected ? Color.white.opacity(0.85) : Theme.overlay)
             }
         }
     }
@@ -982,7 +986,7 @@ struct InspectorSwitch: View {
         .toggleStyle(.switch)
         .disabled(!isInteractive)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .rectangularHitTarget()
+        .roundedHitTarget(Theme.radiusSm)
     }
 }
 
