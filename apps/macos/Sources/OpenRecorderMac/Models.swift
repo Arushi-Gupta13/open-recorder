@@ -523,11 +523,11 @@ struct FacecamSettings: Codable, Hashable {
         FacecamSettings(
             enabled: enabled,
             shape: normalizedShape,
-            size: max(12, min(size, 40)),
+            size: max(8, min(size, 75)),
             cornerRadius: max(0, min(cornerRadius, 100)),
             borderWidth: max(0, min(borderWidth, 16)),
             borderColor: normalizedBorderColor,
-            margin: max(0, min(margin, 12)),
+            margin: max(0, min(margin, 24)),
             anchor: FacecamAnchor.resolve(anchor).rawValue
         )
     }
@@ -549,6 +549,11 @@ struct FacecamSettings: Codable, Hashable {
         let value = borderColor.trimmingCharacters(in: .whitespacesAndNewlines)
         return value.isEmpty ? "#FFFFFF" : value
     }
+}
+
+struct CameraRecordingEvent: Codable, Equatable {
+    var timestamp: Double
+    var settings: FacecamSettings
 }
 
 struct RecordingSession: Codable, Hashable {
