@@ -161,13 +161,22 @@ enum WindowSourceFilter {
     }
 
     private static let blockedOwnerNames: Set<String> = [
+        "airplay",
+        "airplayxpchelper",
         "control center",
+        "coreauthui",
         "dock",
         "loginwindow",
         "notification center",
+        "quicklookuiservice",
+        "screencapture",
+        "screencaptured",
+        "screencaptureui",
         "spotlight",
         "systemuiserver",
+        "talagent",
         "textinputmenuagent",
+        "universalaccessd",
         "wallpaper",
         "window server"
     ]
@@ -180,9 +189,13 @@ enum WindowSourceFilter {
 
     private static let blockedBundlePrefixes: [String] = [
         "com.apple.controlcenter",
+        "com.apple.coreauthui",
         "com.apple.dock",
         "com.apple.loginwindow",
         "com.apple.notificationcenterui",
+        "com.apple.quicklook.ui.helper",
+        "com.apple.screencapture",
+        "com.apple.screencaptureui",
         "com.apple.spotlight",
         "com.apple.systemuiserver",
         "com.apple.textinputmenuagent",
