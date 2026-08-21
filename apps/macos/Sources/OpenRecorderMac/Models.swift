@@ -471,6 +471,10 @@ enum FacecamAnchor: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
+    static func resolve(_ rawValue: String) -> FacecamAnchor {
+        FacecamAnchor(rawValue: rawValue) ?? .bottomRight
+    }
+
     static func from(relX: CGFloat, relYFromTop: CGFloat) -> FacecamAnchor {
         let col: Int
         if relX < 0.33 {
@@ -514,6 +518,7 @@ struct FacecamSettings: Codable, Hashable {
     var borderColor: String
     var margin: Double
     var anchor: String
+    var fixedDuringZoom: Bool? = false
 
     var clamped: FacecamSettings {
         FacecamSettings(
@@ -524,7 +529,8 @@ struct FacecamSettings: Codable, Hashable {
             borderWidth: max(0, min(borderWidth, 16)),
             borderColor: normalizedBorderColor,
             margin: max(0, min(margin, 24)),
-            anchor: FacecamAnchor.resolve(anchor).rawValue
+            anchor: FacecamAnchor.resolve(anchor).rawValue,
+            fixedDuringZoom: fixedDuringZoom
         )
     }
 
