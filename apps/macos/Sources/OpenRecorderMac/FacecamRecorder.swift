@@ -92,6 +92,8 @@ final class FacecamRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
         let device = try cameraDevice(cameraDeviceID)
         let input = try AVCaptureDeviceInput(device: device)
         let session = AVCaptureSession()
+        session.beginConfiguration()
+        defer { session.commitConfiguration() }
         session.sessionPreset = .high
 
         guard session.canAddInput(input) else {
