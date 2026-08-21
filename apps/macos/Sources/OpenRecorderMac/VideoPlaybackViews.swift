@@ -787,7 +787,17 @@ struct FacecamOverlayLayout {
             y = containerSize.height - margin - halfSide
         }
 
-        return CGRect(x: x - halfSide, y: y - halfSide, width: side, height: side)
+        let rawX = x - halfSide
+        let rawY = y - halfSide
+        let clampedX = max(0, min(rawX, containerSize.width - side))
+        let clampedY = max(0, min(rawY, containerSize.height - side))
+
+        return CGRect(
+            x: clampedX,
+            y: clampedY,
+            width: min(side, containerSize.width),
+            height: min(side, containerSize.height)
+        )
     }
 }
 
