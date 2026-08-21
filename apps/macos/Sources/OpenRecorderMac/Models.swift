@@ -471,10 +471,6 @@ enum FacecamAnchor: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
-    static func resolve(_ rawValue: String) -> FacecamAnchor {
-        FacecamAnchor(rawValue: rawValue) ?? .bottomRight
-    }
-
     static func from(relX: CGFloat, relYFromTop: CGFloat) -> FacecamAnchor {
         let col: Int
         if relX < 0.33 {
@@ -518,61 +514,17 @@ struct FacecamSettings: Codable, Hashable {
     var borderColor: String
     var margin: Double
     var anchor: String
-    /// When true, the camera bubble stays at its anchored position even while auto-zoom
-    /// is actively panning/scaling the screen content. When false (default), the bubble
-    /// moves with the zoom transform so it always stays in the same relative screen corner.
-    var fixedDuringZoom: Bool
-
-    init(
-        enabled: Bool,
-        shape: String,
-        size: Double,
-        cornerRadius: Double,
-        borderWidth: Double,
-        borderColor: String,
-        margin: Double,
-        anchor: String,
-        fixedDuringZoom: Bool = false
-    ) {
-        self.enabled = enabled
-        self.shape = shape
-        self.size = size
-        self.cornerRadius = cornerRadius
-        self.borderWidth = borderWidth
-        self.borderColor = borderColor
-        self.margin = margin
-        self.anchor = anchor
-        self.fixedDuringZoom = fixedDuringZoom
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case enabled, shape, size, cornerRadius, borderWidth, borderColor, margin, anchor, fixedDuringZoom
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        enabled        = try c.decode(Bool.self, forKey: .enabled)
-        shape          = try c.decode(String.self, forKey: .shape)
-        size           = try c.decode(Double.self, forKey: .size)
-        cornerRadius   = try c.decode(Double.self, forKey: .cornerRadius)
-        borderWidth    = try c.decode(Double.self, forKey: .borderWidth)
-        borderColor    = try c.decode(String.self, forKey: .borderColor)
-        margin         = try c.decode(Double.self, forKey: .margin)
-        anchor         = try c.decode(String.self, forKey: .anchor)
-        fixedDuringZoom = (try? c.decodeIfPresent(Bool.self, forKey: .fixedDuringZoom)) ?? false
-    }
 
     var clamped: FacecamSettings {
         FacecamSettings(
             enabled: enabled,
             shape: normalizedShape,
-            size: max(12, min(size, 40)),
+            size: max(8, min(size, 75)),
             cornerRadius: max(0, min(cornerRadius, 100)),
             borderWidth: max(0, min(borderWidth, 16)),
             borderColor: normalizedBorderColor,
-            margin: max(0, min(margin, 12)),
-            anchor: FacecamAnchor.resolve(anchor).rawValue,
-            fixedDuringZoom: fixedDuringZoom
+            margin: max(0, min(margin, 24)),
+            anchor: FacecamAnchor.resolve(anchor).rawValue
         )
     }
 
@@ -593,6 +545,11 @@ struct FacecamSettings: Codable, Hashable {
         let value = borderColor.trimmingCharacters(in: .whitespacesAndNewlines)
         return value.isEmpty ? "#FFFFFF" : value
     }
+}
+
+struct CameraRecordingEvent: Codable, Equatable {
+    var timestamp: Double
+    var settings: FacecamSettings
 }
 
 struct RecordingSession: Codable, Hashable {
@@ -900,8 +857,7 @@ func defaultFacecamSettings(enabled: Bool) -> FacecamSettings {
         borderWidth: 4,
         borderColor: "#FFFFFF",
         margin: 4,
-        anchor: "bottom-right",
-        fixedDuringZoom: false
+        anchor: "bottom-right"
     )
 }
 

@@ -278,7 +278,7 @@ struct VideoEditorStudioView: View {
                 cursorSize: editor.binding(\.cursorOverlay.size),
                 cursorSmoothing: editor.binding(\.cursorOverlay.smoothing),
                 cursorStyleID: editor.binding(\.cursorOverlay.styleID),
-                lockCameraWhenZooming: editor.facecamBinding(\.fixedDuringZoom, default: false),
+                cameraSettings: editor.binding(\.facecamSettings),
                 recordingSession: recordingSession
             )
         }
