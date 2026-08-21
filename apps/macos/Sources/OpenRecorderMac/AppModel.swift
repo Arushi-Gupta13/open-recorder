@@ -1271,7 +1271,7 @@ final class AppModel: ObservableObject {
         dispatch(.beginCapture(.recording, runtimeIsRecording: false))
         dispatch(.selectSource(displaySource))
         persistCaptureSetup(source: displaySource)
-        startRecording()
+        showHUD()
     }
 
     @MainActor
@@ -1284,7 +1284,7 @@ final class AppModel: ObservableObject {
         guard ensureScreenRecordingPermissionForCapture() else { return }
 
         dispatch(.beginCapture(.recording, runtimeIsRecording: false))
-        isDragRecordingPending = true
+        isDragRecordingPending = false
         requestInteractiveAreaSelection()
     }
 
