@@ -777,7 +777,6 @@ final class AppModel: ObservableObject {
     }
 
     func bootstrap() {
-        disableCamera()
         presentOnboardingIfNeeded()
         Task {
             await refreshSources()
@@ -2738,11 +2737,6 @@ final class AppModel: ObservableObject {
 
     private func prewarmSelectedFacecamIfNeeded() {
         let options = currentCaptureOptions
-        guard options.includeCamera else {
-            cancelFacecamPrewarm()
-            return
-        }
-
         facecamPrewarmTask?.cancel()
         facecamPrewarmTask = Task { @MainActor [weak self] in
             guard let self else { return }
