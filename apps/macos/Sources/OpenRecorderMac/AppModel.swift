@@ -2511,6 +2511,9 @@ final class AppModel: ObservableObject {
     func toggleSystemAudio() {
         captureOptions.send(.availabilityChanged(canChangeRecordingOptions))
         captureOptions.send(.systemAudioToggled)
+        if captureOptions.state.includeSystemAudio && capture.screenRecordingPermissionState != .granted {
+            _ = requestScreenRecordingPermission()
+        }
     }
 
     func disableCamera() {
