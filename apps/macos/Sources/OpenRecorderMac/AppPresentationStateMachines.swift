@@ -117,6 +117,9 @@ extension CaptureOptionsState {
         case .cameraEnabledChanged(let isEnabled):
             guard canChangeOptions else { return lockedMutationEffects() }
             includeCamera = isEnabled
+            if isEnabled && selectedCameraDeviceID == nil {
+                selectedCameraDeviceID = cameraDevices.first?.id
+            }
             return []
 
         case .deviceRefreshStarted:

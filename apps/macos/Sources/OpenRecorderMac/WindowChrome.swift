@@ -137,7 +137,7 @@ final class WindowConfigurationView: NSView {
         window.collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,
-            .stationary
+            .ignoresCycle
         ]
         window.isMovableByWindowBackground = true
         window.titleVisibility = .hidden

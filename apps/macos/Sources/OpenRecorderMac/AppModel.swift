@@ -1517,6 +1517,7 @@ final class AppModel: ObservableObject {
             if options.includeCamera {
                 let initialSettings = resolveFacecamSettingsForRecording(source: selectedSource)
                 cameraRecordingEvents.append(CameraRecordingEvent(timestamp: 0.0, settings: initialSettings))
+                requestWindow(.showCameraBubble)
             }
 
             currentVideoURL = outputURL
@@ -2588,6 +2589,8 @@ final class AppModel: ObservableObject {
     func selectCameraDevice(_ deviceID: String?) {
         captureOptions.send(.cameraSelected(deviceID))
         prewarmSelectedFacecamIfNeeded()
+        requestWindow(.showCameraBubble)
+        requestWindow(.closeCameraSelector)
     }
 
     func selectNoMicrophoneInput() {

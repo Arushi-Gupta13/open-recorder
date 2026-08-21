@@ -262,10 +262,8 @@ struct CaptureHUD: View {
         ) {
             if options.state.includeCamera {
                 model.disableCamera()
-            } else if options.state.hasAvailableCameraSelection {
-                model.includeCamera = true
             } else {
-                openCameraSelector()
+                model.includeCamera = true
             }
         }
 
