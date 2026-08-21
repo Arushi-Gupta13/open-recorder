@@ -290,7 +290,9 @@ struct VideoPreviewPanel: View {
                     )
                     .frame(width: recordingFrame.width, height: recordingFrame.height)
                     .offset(x: recordingFrame.minX, y: recordingFrame.minY)
-                    .transformEffect(facecamZoomTransform)
+                    // Only zoom the camera bubble together with the screen if the user
+                    // has NOT locked the camera in place during zoom.
+                    .transformEffect(facecamSettings.fixedDuringZoom ? .identity : facecamZoomTransform)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)

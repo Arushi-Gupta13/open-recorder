@@ -24,6 +24,8 @@ struct SettingsInspector: View {
     @Binding var cursorSize: Double
     @Binding var cursorSmoothing: Double
     @Binding var cursorStyleID: CursorStyleID
+    /// Bound to `FacecamSettings.fixedDuringZoom`; only relevant when a facecam was recorded.
+    @Binding var lockCameraWhenZooming: Bool
     var recordingSession: RecordingSession?
 
     @Namespace private var tabRailAnimation
@@ -237,6 +239,12 @@ struct SettingsInspector: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 InspectorSwitch(title: "Remove camera background", isOn: $removeCameraBackground)
+                if hasRecordedCamera {
+                    InspectorSwitch(
+                        title: "Lock camera during zoom",
+                        isOn: $lockCameraWhenZooming
+                    )
+                }
             }
             if let path = recordingSession?.facecamVideoPath {
                 SessionAssetRow(title: "Facecam File", path: path)

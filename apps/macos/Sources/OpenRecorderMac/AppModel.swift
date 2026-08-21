@@ -160,6 +160,16 @@ final class AppModel: ObservableObject {
         get { appShell.settings.state.autoZoomAnimationPreset }
         set { appShell.settings.send(.autoZoomAnimationPresetChanged(newValue)) }
     }
+    /// Whether to play a synthesised click sound on every mouse button press during recording.
+    var mouseClickSoundsEnabled: Bool {
+        get { recordingPreferences.load().mouseClickSoundsEnabled }
+        set { recordingPreferences.setMouseClickSoundsEnabled(newValue) }
+    }
+    /// Whether to play a soft tap sound on every key-down event during recording.
+    var keyboardSoundsEnabled: Bool {
+        get { recordingPreferences.load().keyboardSoundsEnabled }
+        set { recordingPreferences.setKeyboardSoundsEnabled(newValue) }
+    }
     var microphoneDevices: [CaptureDeviceInfo] {
         get { captureOptions.state.microphoneDevices }
         set {
@@ -1470,6 +1480,12 @@ final class AppModel: ObservableObject {
             }
 
             cursorTelemetryRecorder.start(for: selectedSource)
+            // Start audio feedback (click/keyboard sounds) if user has enabled them.
+            let audioFeedback = CaptureAudioFeedback.shared
+            let latestPrefs = recordingPreferences.load()
+            audioFeedback.mouseClickSoundsEnabled = latestPrefs.mouseClickSoundsEnabled
+            audioFeedback.keyboardSoundsEnabled = latestPrefs.keyboardSoundsEnabled
+            audioFeedback.startMonitoring()
             let screenStartedAt = try await startRecordingCapture(selectedSource, outputURL, options)
             cursorTelemetryRecorder.alignStart(to: screenStartedAt)
             activeScreenStartedAt = screenStartedAt
@@ -1537,6 +1553,7 @@ final class AppModel: ObservableObject {
         do {
             let capturedFacecamSettings = resolveFacecamSettingsForRecording(source: source)
             let outputURL = try await stopRecordingCapture()
+            CaptureAudioFeedback.shared.stopMonitoring()
             let stoppedFacecamURL = try? await stopFacecam()
             let cursorTelemetryURL = cursorTelemetryRecorder.stop(videoURL: outputURL)
             currentVideoURL = outputURL
@@ -1582,6 +1599,7 @@ final class AppModel: ObservableObject {
                 dispatch(.recordingStopped(message: "Recording stopped before a file was written."))
             }
         } catch {
+            CaptureAudioFeedback.shared.stopMonitoring()
             _ = cursorTelemetryRecorder.stop(videoURL: nil)
             if let source {
                 dispatch(.recordingFailed(source, message: error.localizedDescription))
