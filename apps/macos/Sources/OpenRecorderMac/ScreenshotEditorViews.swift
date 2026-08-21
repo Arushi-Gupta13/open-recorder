@@ -456,7 +456,7 @@ struct ScreenshotSettingsPanel: View {
             .padding(12)
             .background(Color.white.opacity(0.025))
         }
-        .studioEditorPaneChrome()
+        .studioEditorPaneChrome(bg: Theme.sidebarBg)
     }
 
     private var header: some View {

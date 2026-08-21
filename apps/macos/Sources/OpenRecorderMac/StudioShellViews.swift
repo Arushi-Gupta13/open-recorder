@@ -273,18 +273,16 @@ struct StudioNavBar: View {
     private let items: [AppSection] = [.projects]
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 6) {
             ForEach(items) { section in
-                StudioNavButton(
+                StudioIconNavButton(
                     title: section.title,
-                    symbolName: navSymbol(for: section),
-                    isActive: selectedSection == section
+                    symbolName: navSymbol(for: section)
                 ) {
                     onSelectSection(section)
                 }
             }
         }
-        .padding(.horizontal, 4)
         .frame(height: 32)
     }
 
@@ -307,20 +305,17 @@ struct StudioNavButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: symbolName)
-                    .font(.system(size: Theme.iconSm, weight: isActive ? .semibold : .medium))
-                    .frame(width: 16, height: 16)
-                Text(title)
-                    .font(.system(size: 13, weight: isActive ? .semibold : .medium))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(isActive ? Theme.accent : (isHovering ? Color.white : Theme.fgMuted))
-            .animation(.snappy(duration: 0.16), value: isHovering)
-            .animation(.snappy(duration: 0.18), value: isActive)
+            Image(systemName: symbolName)
+                .font(.system(size: 13, weight: isActive ? .bold : .medium))
+                .frame(width: 26, height: 26)
+                .foregroundStyle(isActive ? Color.white : (isHovering ? Color.white : Theme.fgMuted))
+                .animation(.snappy(duration: 0.16), value: isHovering)
+                .animation(.snappy(duration: 0.18), value: isActive)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(title)
+        .accessibilityLabel(title)
         .onHover { hovering in
             isHovering = hovering
         }
@@ -339,7 +334,7 @@ struct StudioIconNavButton: View {
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(isHovering ? Color.white : Theme.fgMuted)
                 .frame(width: 26, height: 26)
-                .background(isHovering ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(title)
@@ -364,9 +359,9 @@ struct EditorHistoryButton: View {
                 .foregroundStyle(
                     isEnabled
                         ? (isHovering ? Color.white : Theme.fgMuted)
-                        : Theme.fgMuted.opacity(0.30)
+                        : Theme.fgDisabled
                 )
-                .background(isHovering && isEnabled ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)
@@ -387,17 +382,17 @@ struct StudioTitleBar: View {
     var body: some View {
         ZStack {
             HStack(spacing: 12) {
-                StudioNavBar(
-                    selectedSection: workspace.state.selectedSection,
-                    isScreenshotEditor: editorMediaKind == .screenshot,
-                    onSelectSection: { section in
-                        workspace.send(.sectionSelected(section))
-                    }
-                )
-
                 Spacer(minLength: 0)
 
                 HStack(spacing: 8) {
+                    StudioNavBar(
+                        selectedSection: workspace.state.selectedSection,
+                        isScreenshotEditor: editorMediaKind == .screenshot,
+                        onSelectSection: { section in
+                            workspace.send(.sectionSelected(section))
+                        }
+                    )
+
                     editorHistoryControls
                     exportButton
                 }
@@ -414,18 +409,13 @@ struct StudioTitleBar: View {
                 Rectangle()
                     .fill(.ultraThinMaterial)
                 Rectangle()
-                    .fill(Theme.surface.opacity(0.90))
+                    .fill(Theme.navbarBg.opacity(0.92))
                 LinearGradient(
                     colors: [Color.white.opacity(0.045), Color.clear],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             }
-        }
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Theme.borderStrong.opacity(0.56))
-                .frame(height: 1)
         }
         .simultaneousGesture(
             TapGesture().onEnded {
@@ -494,16 +484,13 @@ struct StudioTitleBar: View {
                         Image(systemName: "arrow.up.right.video.fill")
                             .font(.system(size: 10.5, weight: .bold))
                         Text("Export")
-                            .font(.system(size: 11.5, weight: .semibold))
+                            .font(.system(size: 11.5, weight: .bold))
                     }
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Theme.accent, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .foregroundStyle(Color.white)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(Color.white.opacity(0.20), lineWidth: 1)
-                    }
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .foregroundStyle(Color.black)
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
                 }
             }
         } else if workspace.state.selectedSection == .editor, screenshotURL != nil {
@@ -519,16 +506,13 @@ struct StudioTitleBar: View {
                         Image(systemName: "square.and.arrow.up.fill")
                             .font(.system(size: 10.5, weight: .bold))
                         Text("Export")
-                            .font(.system(size: 11.5, weight: .semibold))
+                            .font(.system(size: 11.5, weight: .bold))
                     }
                     .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Theme.accent, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .foregroundStyle(Color.white)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(Color.white.opacity(0.20), lineWidth: 1)
-                    }
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .foregroundStyle(Color.black)
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
                 }
             }
         }

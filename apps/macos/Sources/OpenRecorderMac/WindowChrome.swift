@@ -447,6 +447,7 @@ struct WindowCommandBridge: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
     var shell: AppShellDriver
+    var isCameraEnabled: () -> Bool = { false }
 
     var body: some View {
         Color.clear
@@ -514,7 +515,7 @@ struct WindowCommandBridge: View {
             openWindow(id: "area-selector")
         case .showStudio:
             NSApp.unhide(nil)
-            dismissCaptureWindows()
+            dismissCaptureWindows(alwaysDismissCameraBubble: true)
             if let editorSession = command.editorSession {
                 openWindow(id: "editor", value: editorSession)
             } else {
@@ -535,18 +536,22 @@ struct WindowCommandBridge: View {
         }
     }
 
-    private func dismissCaptureWindows() {
+    private func dismissCaptureWindows(alwaysDismissCameraBubble: Bool = false) {
         dismissWindow(id: "hud")
         dismissWindow(id: "source-selector")
         dismissWindow(id: "area-selector")
         dismissWindow(id: "microphone-selector")
         dismissWindow(id: "camera-selector")
-        dismissWindow(id: "camera-bubble")
+        if alwaysDismissCameraBubble || !isCameraEnabled() {
+            dismissWindow(id: "camera-bubble")
+        }
     }
 
     private func hideAppWindowsForCapture() {
         dismissCaptureWindows()
-        NSApp.hide(nil)
+        if !isCameraEnabled() {
+            NSApp.hide(nil)
+        }
     }
 }
 

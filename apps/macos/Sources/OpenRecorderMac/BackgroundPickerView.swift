@@ -64,26 +64,14 @@ struct BackgroundPickerView: View {
                                 activate(kind)
                             } label: {
                                 Image(systemName: kind.symbolName)
-                                    .font(.system(size: 12.5, weight: isSelected ? .bold : .medium))
+                                    .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                                     .foregroundStyle(
                                         isSelected
-                                            ? kind.accentColor
-                                            : (hoveredKind == kind ? Color.white : Theme.fgMuted.opacity(0.72))
+                                            ? Color.white
+                                            : (hoveredKind == kind ? Color.white : Theme.fgMuted)
                                     )
                                     .frame(width: 28, height: 28)
-                                    .background(
-                                        isSelected
-                                            ? kind.accentColor.opacity(0.18)
-                                            : (hoveredKind == kind ? Color.white.opacity(0.06) : Color.clear),
-                                        in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    )
-                                    .overlay {
-                                        if isSelected {
-                                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                .stroke(kind.accentColor.opacity(0.55), lineWidth: 1)
-                                        }
-                                    }
-                                    .shadow(color: isSelected ? kind.accentColor.opacity(0.35) : Color.clear, radius: 4, y: 1)
+                                    .contentShape(Rectangle())
                             }
                             .onHover { isHovering in
                                 hoveredKind = isHovering ? kind : (hoveredKind == kind ? nil : hoveredKind)
@@ -97,17 +85,10 @@ struct BackgroundPickerView: View {
                         chooseCustomFile()
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Theme.accent)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Theme.fgMuted)
                             .frame(width: 28, height: 28)
-                            .background(
-                                Theme.accent.opacity(0.12),
-                                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            )
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .stroke(Theme.accent.opacity(0.35), lineWidth: 1)
-                            }
+                            .contentShape(Rectangle())
                     }
                 }
 
@@ -221,11 +202,11 @@ struct BackgroundPickerView: View {
                         .overlay {
                             RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                                 .stroke(
-                                    selectedGradientID == preset.id ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                    selectedGradientID == preset.id ? Color.white : Theme.borderStrong.opacity(0.55),
                                     lineWidth: selectedGradientID == preset.id ? 2 : 1
                                 )
                         }
-                        .shadow(color: selectedGradientID == preset.id ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
+                        .shadow(color: selectedGradientID == preset.id ? Color.white.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(preset.id.replacingOccurrences(of: "-", with: " ").capitalized)
             }
@@ -247,11 +228,11 @@ struct BackgroundPickerView: View {
                             .overlay {
                                 RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                                     .stroke(
-                                        selectedColor == swatch ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                        selectedColor == swatch ? Color.white : Theme.borderStrong.opacity(0.55),
                                         lineWidth: selectedColor == swatch ? 2 : 1
                                     )
                             }
-                            .shadow(color: selectedColor == swatch ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
+                            .shadow(color: selectedColor == swatch ? Color.white.opacity(0.35) : Color.clear, radius: 4, y: 1)
                     }
                     .help(swatch.hexString)
                 }
@@ -291,11 +272,11 @@ struct BackgroundPickerView: View {
                     .overlay {
                         RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                             .stroke(
-                                selectedWallpaperID == preset.id ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                selectedWallpaperID == preset.id ? Color.white : Theme.borderStrong.opacity(0.55),
                                 lineWidth: selectedWallpaperID == preset.id ? 2 : 1
                             )
                     }
-                    .shadow(color: selectedWallpaperID == preset.id ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
+                    .shadow(color: selectedWallpaperID == preset.id ? Color.white.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(preset.label)
             }
@@ -315,11 +296,11 @@ struct BackgroundPickerView: View {
                         .overlay {
                             RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous)
                                 .stroke(
-                                    selectedWallpaperID == preset.id ? Theme.accent : Theme.borderStrong.opacity(0.55),
+                                    selectedWallpaperID == preset.id ? Color.white : Theme.borderStrong.opacity(0.55),
                                     lineWidth: selectedWallpaperID == preset.id ? 2 : 1
                                 )
                         }
-                        .shadow(color: selectedWallpaperID == preset.id ? Theme.accent.opacity(0.35) : Color.clear, radius: 4, y: 1)
+                        .shadow(color: selectedWallpaperID == preset.id ? Color.white.opacity(0.35) : Color.clear, radius: 4, y: 1)
                 }
                 .help(preset.label)
             }
@@ -357,16 +338,16 @@ struct BackgroundPickerView: View {
 
                 Image(systemName: "checkmark")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Color.white)
                     .frame(width: 20, height: 20)
-                    .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
             }
             .padding(9)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.overlay.opacity(0.72), in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                    .stroke(Theme.accent.opacity(0.38), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.60), lineWidth: 1)
             }
         }
     }

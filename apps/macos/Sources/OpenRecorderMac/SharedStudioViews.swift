@@ -65,8 +65,8 @@ extension View {
     }
 
     @ViewBuilder
-    func studioEditorPaneChrome(clipContent: Bool = true) -> some View {
-        background(Theme.surface.opacity(0.88))
+    func studioEditorPaneChrome(bg: Color = Theme.canvasBg, clipContent: Bool = true) -> some View {
+        background(bg)
     }
 
     @ViewBuilder
@@ -1124,12 +1124,17 @@ enum Theme {
     static let springSmooth: Animation = .spring(response: 0.32, dampingFraction: 0.80)
     static let springBouncy: Animation = .spring(response: 0.38, dampingFraction: 0.74)
 
-    // Surfaces
-    static let appBg          = Color(red: 0.035, green: 0.035, blue: 0.043)
+    // Surfaces — Harmonious Multi-Tier Neutral Greys
+    static let appBg          = Color(red: 0.040, green: 0.040, blue: 0.048) // Canvas stage grey
+    static let canvasBg       = Color(red: 0.040, green: 0.040, blue: 0.048) // Canvas preview grey
+    static let navbarBg       = Color(red: 0.086, green: 0.086, blue: 0.098) // Top Navbar grey
+    static let sidebarBg      = Color(red: 0.068, green: 0.068, blue: 0.078) // Right Inspector panel grey
+    static let railBg         = Color(red: 0.056, green: 0.056, blue: 0.065) // Vertical icon rail grey
+    static let timelineBg     = Color(red: 0.062, green: 0.062, blue: 0.072) // Bottom Timeline dock grey
     static let appBgMuted     = Color(red: 0.055, green: 0.055, blue: 0.067)
-    static let surface        = Color(red: 0.075, green: 0.075, blue: 0.088)
-    static let surfaceRaised  = Color(red: 0.10, green: 0.10, blue: 0.12)
-    static let surfaceControl = Color(red: 0.12, green: 0.12, blue: 0.145)
+    static let surface        = Color(red: 0.086, green: 0.086, blue: 0.098)
+    static let surfaceRaised  = Color(red: 0.105, green: 0.105, blue: 0.122)
+    static let surfaceControl = Color(red: 0.125, green: 0.125, blue: 0.145)
 
     // Foregrounds
     static let fg         = Color.white

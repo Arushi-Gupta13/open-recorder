@@ -29,12 +29,22 @@ final class OpenRecorderAppDelegate: NSObject, NSApplicationDelegate {
         handleWindowCommand(model.windowCommand)
     }
 
+    var isCameraEnabled: Bool {
+        model?.includeCamera ?? false
+    }
+
     func installWindowActions(
         openWindow: @escaping (String) -> Void,
         openEditor: @escaping (EditorSession) -> Void,
-        dismissWindow: @escaping (String) -> Void
+        dismissWindow: @escaping (String) -> Void,
+        shouldKeepCameraBubble: @escaping () -> Bool = { false }
     ) {
-        windowActions.install(openWindow: openWindow, openEditor: openEditor, dismissWindow: dismissWindow)
+        windowActions.install(
+            openWindow: openWindow,
+            openEditor: openEditor,
+            dismissWindow: dismissWindow,
+            shouldKeepCameraBubble: shouldKeepCameraBubble
+        )
         handleWindowCommand(model?.windowCommand)
     }
 
@@ -252,7 +262,10 @@ private struct AppWindowActionBridge: View {
                 appDelegate.installWindowActions(
                     openWindow: { id in openWindow(id: id) },
                     openEditor: { session in openWindow(id: "editor", value: session) },
-                    dismissWindow: { id in dismissWindow(id: id) }
+                    dismissWindow: { id in dismissWindow(id: id) },
+                    shouldKeepCameraBubble: { [weak appDelegate] in
+                        appDelegate?.isCameraEnabled ?? false
+                    }
                 )
             }
     }
@@ -264,6 +277,7 @@ final class AppWindowActions {
     private var openWindow: (String) -> Void = { _ in }
     private var openEditor: (EditorSession) -> Void = { _ in }
     private var dismissWindow: (String) -> Void = { _ in }
+    private var shouldKeepCameraBubble: () -> Bool = { false }
     private var hideApp: () -> Void = {
         NSApplication.shared.hide(nil)
     }
@@ -278,6 +292,7 @@ final class AppWindowActions {
         openWindow: @escaping (String) -> Void,
         openEditor: @escaping (EditorSession) -> Void,
         dismissWindow: @escaping (String) -> Void,
+        shouldKeepCameraBubble: @escaping () -> Bool = { false },
         activateApp: @escaping () -> Void = {
             NSApplication.shared.activate(ignoringOtherApps: true)
         },
@@ -291,6 +306,7 @@ final class AppWindowActions {
         self.openWindow = openWindow
         self.openEditor = openEditor
         self.dismissWindow = dismissWindow
+        self.shouldKeepCameraBubble = shouldKeepCameraBubble
         self.activateApp = activateApp
         self.hideApp = hideApp
         self.unhideApp = unhideApp
@@ -361,7 +377,7 @@ final class AppWindowActions {
             openWindow("area-selector")
         case .showStudio:
             unhideApp()
-            dismissCaptureWindows()
+            dismissCaptureWindows(alwaysDismissCameraBubble: true)
             if let editorSession = command.editorSession {
                 openEditor(editorSession)
             } else {
@@ -382,18 +398,22 @@ final class AppWindowActions {
         }
     }
 
-    private func dismissCaptureWindows() {
+    private func dismissCaptureWindows(alwaysDismissCameraBubble: Bool = false) {
         dismissWindow("hud")
         dismissWindow("source-selector")
         dismissWindow("area-selector")
         dismissWindow("microphone-selector")
         dismissWindow("camera-selector")
-        dismissWindow("camera-bubble")
+        if alwaysDismissCameraBubble || !shouldKeepCameraBubble() {
+            dismissWindow("camera-bubble")
+        }
     }
 
     private func hideAppWindowsForCapture() {
         dismissCaptureWindows()
-        hideApp()
+        if !shouldKeepCameraBubble() {
+            hideApp()
+        }
     }
 }
 

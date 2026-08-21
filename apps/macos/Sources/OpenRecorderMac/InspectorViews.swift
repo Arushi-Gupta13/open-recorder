@@ -43,7 +43,7 @@ struct SettingsInspector: View {
 
     var body: some View {
         inspectorContent
-            .studioEditorPaneChrome()
+            .studioEditorPaneChrome(bg: Theme.sidebarBg)
             .onChange(of: showsInsetControls) { _, isVisible in
                 if !isVisible {
                     isInsetBalanceExpanded = false
@@ -103,18 +103,18 @@ struct SettingsInspector: View {
                             .font(.system(size: 16, weight: isSelected ? .bold : .medium))
                             .foregroundStyle(
                                 isSelected
-                                    ? Theme.accent
-                                    : (isStubbed ? Theme.fgMuted.opacity(0.30) : (hoveredTab == tab ? Color.white : Theme.fgMuted.opacity(0.70)))
+                                    ? Color.white
+                                    : (isStubbed ? Theme.fgDisabled : (hoveredTab == tab ? Color.white : Theme.fgMuted))
                             )
-                            .shadow(color: isSelected ? Theme.accent.opacity(0.45) : Color.clear, radius: 6, y: 1)
+                            .shadow(color: isSelected ? Color.white.opacity(0.35) : Color.clear, radius: 6, y: 1)
                             .frame(width: 32, height: 26)
 
                         Text(tab.shortTitle)
                             .font(.system(size: 9.5, weight: isSelected ? .bold : .medium))
                             .foregroundStyle(
                                 isSelected
-                                    ? Theme.accent
-                                    : (isStubbed ? Theme.fgMuted.opacity(0.30) : (hoveredTab == tab ? Color.white : Theme.fgMuted.opacity(0.70)))
+                                    ? Color.white
+                                    : (isStubbed ? Theme.fgDisabled : (hoveredTab == tab ? Color.white : Theme.fgMuted))
                             )
                             .lineLimit(1)
                     }
@@ -135,7 +135,7 @@ struct SettingsInspector: View {
         .padding(.vertical, 14)
         .padding(.horizontal, 2)
         .frame(width: 50)
-        .background(Color.black.opacity(0.18))
+        .background(Theme.railBg)
     }
 
     private var helpMenuButton: some View {
@@ -484,8 +484,7 @@ struct InspectorSlider: View {
                 trackHeight: 22,
                 hitHeight: 22,
                 fillColor: Color.white.opacity(0.20),
-                thumbWidth: 32,
-                thumbHeight: 16,
+                thumbSize: 16,
                 showStepDots: true,
                 showTooltip: false,
                 setsValueFromPointerLocation: true
@@ -528,22 +527,14 @@ struct InspectorSlider: View {
 
     private var valueInput: some View {
         TextField("", text: $draftValueText)
-            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-            .foregroundStyle(isInputFocused ? Color.white : Theme.fg.opacity(0.88))
+            .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+            .foregroundStyle(isInputFocused ? Color.white : Theme.fgMuted)
             .monospacedDigit()
-            .multilineTextAlignment(.center)
+            .multilineTextAlignment(.trailing)
             .textFieldStyle(.plain)
             .focused($isInputFocused)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(Color.black.opacity(isInputFocused ? 0.45 : 0.25))
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .stroke(isInputFocused ? Theme.accent : Color.white.opacity(0.08), lineWidth: 1)
-            }
+            .padding(.horizontal, 2)
+            .padding(.vertical, 1)
             .fixedSize(horizontal: true, vertical: false)
             .onSubmit(commitDraftValue)
     }
@@ -763,8 +754,8 @@ struct InsetBalancePicker: View {
                     .foregroundStyle(Theme.fgMuted)
                 Spacer()
                 Text(offsetText(for: balance.clamped))
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Theme.fg.opacity(0.92))
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.fgMuted)
             }
 
             GeometryReader { proxy in
@@ -972,10 +963,10 @@ struct CursorStyleButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.86))
-            .background(isSelected ? Theme.accent.opacity(0.82) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
+            .background(isSelected ? Color.white.opacity(0.18) : Theme.overlay, in: RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
-                    .stroke(isSelected ? Theme.accent.opacity(0.95) : Theme.overlay)
+                    .stroke(isSelected ? Color.white.opacity(0.85) : Theme.overlay)
             }
         }
     }

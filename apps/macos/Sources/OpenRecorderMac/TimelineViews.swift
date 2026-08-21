@@ -63,7 +63,7 @@ struct TimelinePanel: View {
                     .padding(.top, TimelineMetrics.trackTopPadding)
             }
         }
-        .studioEditorPaneChrome()
+        .studioEditorPaneChrome(bg: Theme.timelineBg)
         .focusable()
         .focused($isTimelineFocused)
         .focusEffectDisabled()
@@ -291,14 +291,14 @@ private struct TimelinePlayPauseButton: View {
         } label: {
             Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(isHovering || playback.isPlaying ? Color.white : Color.white.opacity(0.85))
+                .foregroundStyle(playback.isPlaying || isHovering ? Color.white : Theme.fgMuted)
                 .frame(width: 28, height: 28)
                 .offset(x: playback.isPlaying ? 0 : 1)
-                .background(isHovering ? Color.white.opacity(0.08) : Color.clear, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(playback.player == nil)
-        .opacity(playback.player == nil ? 0.42 : 1)
+        .opacity(playback.player == nil ? 0.35 : 1)
         .help(title)
         .accessibilityLabel(title)
         .onHover { hovering in
@@ -315,12 +315,16 @@ private struct TimelineToolbarIconButton: View {
     @State private var isHovering = false
 
     var body: some View {
-        StudioButton(hitTarget: .rectangle, action: action) {
+        StudioButton(hitTarget: .rounded(6), action: action) {
             Image(systemName: symbolName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(isEnabled ? 0.90 : 0.35))
-                .frame(width: 30, height: 30)
-                .background(Color.white.opacity(isHovering && isEnabled ? 0.10 : 0.001), in: Rectangle())
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(
+                    isEnabled
+                        ? (isHovering ? Color.white : Theme.fgMuted)
+                        : Theme.fgDisabled
+                )
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
         }
         .disabled(!isEnabled)
         .accessibilityLabel(title)
@@ -420,8 +424,7 @@ private struct TimelineZoomSlider: View {
                 trackHeight: 20,
                 hitHeight: 20,
                 fillColor: Color.white.opacity(0.20),
-                thumbWidth: 28,
-                thumbHeight: 14,
+                thumbSize: 14,
                 showStepDots: false,
                 showTooltip: false,
                 setsValueFromPointerLocation: true
@@ -817,57 +820,9 @@ enum PreviewPlaybackSpeedSelection {
     }
 }
 
-struct FilmstripPatternView: View {
-    var width: CGFloat
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                ForEach(0..<max(1, Int(width / 14)), id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 1, style: .continuous)
-                        .fill(Color.black.opacity(0.35))
-                        .frame(width: 5, height: 3.5)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 3)
-            .padding(.top, 3)
-
-            Spacer()
-
-            HStack(spacing: 6) {
-                ForEach(0..<max(1, Int(width / 14)), id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 1, style: .continuous)
-                        .fill(Color.black.opacity(0.35))
-                        .frame(width: 5, height: 3.5)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 3)
-            .padding(.bottom, 3)
-        }
-        .allowsHitTesting(false)
-    }
-}
-
 struct ClipWaveformTextureView: View {
     var body: some View {
-        GeometryReader { proxy in
-            Path { path in
-                let step: CGFloat = 5
-                let count = Int(proxy.size.width / step)
-                let midY = proxy.size.height * 0.65
-                for i in 0..<count {
-                    let x = CGFloat(i) * step + 2
-                    let sinVal = abs(sin(Double(i) * 0.38) * cos(Double(i) * 0.18)) * 0.75 + 0.25
-                    let h = proxy.size.height * 0.35 * CGFloat(sinVal)
-                    path.move(to: CGPoint(x: x, y: midY - h / 2))
-                    path.addLine(to: CGPoint(x: x, y: midY + h / 2))
-                }
-            }
-            .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-        }
-        .allowsHitTesting(false)
+        TimelineWaveformPreview(samples: [])
     }
 }
 
@@ -951,56 +906,96 @@ struct TimelineClipRow: View {
         return RoundedRectangle(cornerRadius: 6, style: .continuous)
             .fill(
                 isDeleted
-                    ? LinearGradient(colors: [Color.secondary.opacity(0.25), Color.secondary.opacity(0.15)], startPoint: .top, endPoint: .bottom)
+                    ? LinearGradient(
+                        colors: [Color.secondary.opacity(0.24), Color.secondary.opacity(0.14)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                     : (isSelected
-                        ? LinearGradient(colors: [Theme.accent, Theme.accent.opacity(0.85)], startPoint: .top, endPoint: .bottom)
-                        : LinearGradient(colors: [Color(red: 0.16, green: 0.22, blue: 0.38), Color(red: 0.11, green: 0.15, blue: 0.28)], startPoint: .top, endPoint: .bottom))
+                        ? LinearGradient(
+                            colors: [Theme.accent.opacity(0.92), Theme.accent.opacity(0.76)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        : LinearGradient(
+                            colors: [
+                                Color(red: 0.14, green: 0.18, blue: 0.32),
+                                Color(red: 0.09, green: 0.12, blue: 0.22)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ))
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(
-                        isSelected ? Color.white.opacity(0.70) : (isDeleted ? Color.secondary.opacity(0.42) : Color.white.opacity(0.12)),
-                        lineWidth: isSelected ? 1.5 : 1
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(isSelected ? 0.65 : 0.18),
+                                Color.white.opacity(isSelected ? 0.25 : 0.05)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: isSelected ? 1.5 : 1.0
                     )
             }
-            .overlay {
-                if !isDeleted {
-                    FilmstripPatternView(width: width)
-                }
-            }
+            .shadow(
+                color: isSelected ? Theme.accent.opacity(0.35) : Color.black.opacity(0.20),
+                radius: isSelected ? 6 : 2,
+                y: 1
+            )
             .overlay(alignment: .bottom) {
-                if let waveformSamples, !waveformSamples.isEmpty, !isDeleted {
-                    TimelineWaveformPreview(samples: waveformSamples)
-                        .frame(height: 35)
-                        .padding(.horizontal, 10)
-                        .padding(.bottom, 8)
-                        .allowsHitTesting(false)
-                } else if !isDeleted {
-                    ClipWaveformTextureView()
-                        .frame(height: 30)
+                if !isDeleted {
+                    TimelineWaveformPreview(samples: waveformSamples(for: segment) ?? (waveformSamples ?? []))
+                        .frame(height: 24)
                         .padding(.horizontal, 8)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 6)
                         .allowsHitTesting(false)
                 }
             }
-            .overlay(alignment: .top) {
-                if width > 82 {
-                    VStack(spacing: 2) {
-                        Label(isDeleted ? "Deleted" : "Clip \(segment.index + 1)", systemImage: isDeleted ? "trash" : "rectangle.on.rectangle")
-                            .font(.system(size: 10, weight: .semibold))
-                        Text("\(formatClipDuration(segment.end - segment.start)) @ \(TimelineClipSpeed.label(segment.speed))")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+            .overlay(alignment: .topLeading) {
+                if width > 70 {
+                    HStack(spacing: 5) {
+                        Image(systemName: isDeleted ? "trash" : "rectangle.on.rectangle")
+                            .font(.system(size: 8.5, weight: .semibold))
+                        Text(isDeleted ? "Deleted" : "Clip \(segment.index + 1)")
+                            .font(.system(size: 9.5, weight: .semibold))
+                        Text("· \(formatClipDuration(segment.end - segment.start)) @ \(TimelineClipSpeed.label(segment.speed))")
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
                     }
                     .foregroundStyle(foreground)
-                    .shadow(color: Color.black.opacity(0.35), radius: 3, y: 1)
-                    .padding(.top, 11)
+                    .shadow(color: Color.black.opacity(0.40), radius: 2, y: 1)
+                    .padding(.top, 6)
+                    .padding(.leading, 10)
                     .allowsHitTesting(false)
                 }
             }
-            .overlay(alignment: .bottomLeading) { Text(formatPlaybackTime(segment.start)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.65)).padding(.leading, 9).padding(.bottom, 5) }
-            .overlay(alignment: .bottomTrailing) { Text(formatPlaybackTime(segment.end)).font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(foreground.opacity(0.65)).padding(.trailing, 9).padding(.bottom, 5) }
+            .overlay(alignment: .topTrailing) {
+                if width > 130 {
+                    Text(formatPlaybackTime(segment.end))
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundStyle(foreground.opacity(0.70))
+                        .shadow(color: Color.black.opacity(0.40), radius: 2, y: 1)
+                        .padding(.top, 6)
+                        .padding(.trailing, 10)
+                        .allowsHitTesting(false)
+                }
+            }
             .padding(.vertical, 5)
             .padding(.horizontal, 2)
+    }
+
+    private func waveformSamples(for segment: TimelineClipSegment) -> [Double]? {
+        guard let fullSamples = waveformSamples, !fullSamples.isEmpty, duration > 0 else {
+            return nil
+        }
+        let totalCount = fullSamples.count
+        let startRatio = max(0.0, min(segment.start / duration, 1.0))
+        let endRatio = max(startRatio, min(segment.end / duration, 1.0))
+        let startIdx = min(Int(startRatio * Double(totalCount)), totalCount - 1)
+        let endIdx = min(max(startIdx + 1, Int(endRatio * Double(totalCount))), totalCount)
+        return Array(fullSamples[startIdx..<endIdx])
     }
 
     private func isDeleted(_ segment: TimelineClipSegment) -> Bool {
@@ -1081,60 +1076,85 @@ struct TimelineWaveformPreview: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let chartSamples = TimelineWaveformChartSample.samples(from: samples, width: proxy.size.width)
-            if !chartSamples.isEmpty {
-                Chart(chartSamples) { sample in
-                    AreaMark(
-                        x: .value("Position", sample.position),
-                        yStart: .value("Lower amplitude", -sample.amplitude),
-                        yEnd: .value("Upper amplitude", sample.amplitude)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.28, green: 0.88, blue: 0.98).opacity(0.95), // Bright Cyan
-                                Color(red: 0.38, green: 0.52, blue: 1.00).opacity(0.90), // Electric Blue
-                                Color(red: 0.76, green: 0.35, blue: 0.96).opacity(0.85), // Vivid Violet
-                                Color(red: 0.95, green: 0.40, blue: 0.65).opacity(0.60)  // Magenta
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
+            let width = max(proxy.size.width, 1)
+            let barWidth: CGFloat = 2.5
+            let barSpacing: CGFloat = 1.6
+            let totalStep = barWidth + barSpacing
+            let barCount = max(1, Int(width / totalStep))
+            let downsampled = resample(samples: samples, count: barCount)
+
+            Canvas { context, size in
+                let midY = size.height / 2
+                let maxH = size.height - 4
+
+                // Pass 1: Soft peak glow behind loud/tallest bars
+                for i in 0..<barCount {
+                    let amp = CGFloat(i < downsampled.count ? downsampled[i] : 0.2)
+                    if amp > 0.48 {
+                        let peakIntensity = (amp - 0.48) / 0.52 // 0.0 to 1.0
+                        let barH = max(3.0, amp * maxH)
+                        let x = CGFloat(i) * totalStep
+                        let glowRect = CGRect(
+                            x: x - 2.0,
+                            y: midY - (barH + 4.0) / 2,
+                            width: barWidth + 4.0,
+                            height: barH + 4.0
                         )
-                    )
-
-                    LineMark(
-                        x: .value("Position", sample.position),
-                        y: .value("Upper crest", sample.amplitude)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(Color(red: 0.45, green: 0.95, blue: 1.0).opacity(0.85))
-                    .lineStyle(StrokeStyle(lineWidth: 1.0, lineCap: .round, lineJoin: .round))
-
-                    LineMark(
-                        x: .value("Position", sample.position),
-                        y: .value("Lower crest", -sample.amplitude)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(Color(red: 0.85, green: 0.45, blue: 0.95).opacity(0.65))
-                    .lineStyle(StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
+                        let glowPath = Path(roundedRect: glowRect, cornerRadius: (barWidth + 4.0) / 2)
+                        context.fill(glowPath, with: .color(Theme.accent.opacity(Double(0.40 * peakIntensity))))
+                    }
                 }
-                .chartXAxis(.hidden)
-                .chartYAxis(.hidden)
-                .chartLegend(.hidden)
-                .chartXScale(domain: 0...max(chartSamples.last?.position ?? 1, 1))
-                .chartYScale(domain: -1...1)
-                .chartPlotStyle { plotArea in
-                    plotArea
-                        .background(Color.clear)
-                        .overlay(alignment: .center) {
-                            Rectangle()
-                                .fill(Color.white.opacity(0.14))
-                                .frame(height: 1)
-                        }
+
+                // Pass 2: Main waveform bars using existing Theme.accent design token
+                let barShading = GraphicsContext.Shading.color(Theme.accent)
+
+                for i in 0..<barCount {
+                    let amp = CGFloat(i < downsampled.count ? downsampled[i] : 0.2)
+                    let barH = max(3.0, amp * maxH)
+                    let x = CGFloat(i) * totalStep
+                    let rect = CGRect(
+                        x: x,
+                        y: midY - barH / 2,
+                        width: barWidth,
+                        height: barH
+                    )
+                    let path = Path(roundedRect: rect, cornerRadius: barWidth / 2)
+                    context.fill(path, with: barShading)
                 }
-                .accessibilityHidden(true)
             }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func resample(samples: [Double], count: Int) -> [Double] {
+        guard count > 0 else { return [] }
+        guard !samples.isEmpty else {
+            // Organic audio rhythm pattern when audio track is silent or loading
+            return (0..<count).map { i in
+                let t = Double(i)
+                let wave1 = sin(t * 0.24) * 0.38
+                let wave2 = cos(t * 0.08) * 0.32
+                let wave3 = sin(t * 0.62) * 0.18
+                let combined = abs(wave1 + wave2 + wave3) + 0.12
+                return min(max(combined, 0.10), 0.92)
+            }
+        }
+        let step = Double(samples.count) / Double(count)
+        return (0..<count).map { i in
+            let startIdx = Int(Double(i) * step)
+            let endIdx = min(Int(Double(i + 1) * step), samples.count)
+            if startIdx < endIdx {
+                var maxVal = 0.0
+                for j in startIdx..<endIdx {
+                    maxVal = max(maxVal, samples[j])
+                }
+                let shaped = pow(maxVal, 0.58)
+                return max(0.10, min(shaped, 1.0))
+            } else if startIdx < samples.count {
+                let shaped = pow(samples[startIdx], 0.58)
+                return max(0.10, min(shaped, 1.0))
+            }
+            return 0.10
         }
     }
 }

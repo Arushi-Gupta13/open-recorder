@@ -890,18 +890,18 @@ final class AppModel: ObservableObject {
 
         if let selectedSource {
             let resolved = resolveSelection(previous: selectedSource, in: capture.sources)
-            dispatch(.refreshSelectedSource(resolved))
-        } else if !hasAttemptedStoredCaptureSetupRestore {
-            hasAttemptedStoredCaptureSetupRestore = true
+            dispatch(.refreshSelectedSource(resolved ?? capture.sources.first(where: { $0.kind == .display })))
+        } else if let primaryDisplay = capture.sources.first(where: { $0.kind == .display }) {
             let restoredSource = storedCaptureSetup.sourceReference?.resolve(
                 in: capture.sources,
                 displayFrames: NSScreen.captureDisplayFramesByID
-            )
+            ) ?? primaryDisplay
             dispatch(.restoreSetup(
                 storedCaptureSetup.mode,
                 restoredSource,
                 preferredSourceKind: storedCaptureSetup.preferredSourceKind
             ))
+            dispatch(.selectSource(restoredSource))
         }
     }
 
@@ -1517,6 +1517,7 @@ final class AppModel: ObservableObject {
 
     private func runRecordingStopFlow(source: CaptureSource?) async {
         do {
+            let capturedFacecamSettings = resolveFacecamSettingsForRecording(source: source)
             let outputURL = try await stopRecordingCapture()
             let stoppedFacecamURL = try? await stopFacecam()
             let cursorTelemetryURL = cursorTelemetryRecorder.stop(videoURL: outputURL)
@@ -1532,6 +1533,7 @@ final class AppModel: ObservableObject {
                 let recordingSession = RecordingSessionBuilder.build(
                     screenVideoURL: outputURL,
                     facecamURL: stoppedFacecamURL ?? activeFacecamURL,
+                    facecamSettings: capturedFacecamSettings,
                     sourceName: sourceName,
                     showCursor: showCursor,
                     cursorTelemetryURL: cursorTelemetryURL,
@@ -2231,6 +2233,46 @@ final class AppModel: ObservableObject {
         return seconds.isFinite && seconds > 0 ? seconds : 0
     }
 
+    private func resolveFacecamSettingsForRecording(source: CaptureSource?) -> FacecamSettings {
+        let shapeString = UserDefaults.standard.string(forKey: "camera_bubble_shape") ?? "circle"
+        let diameter = UserDefaults.standard.double(forKey: "camera_bubble_diameter")
+        let resolvedDiameter = diameter > 0 ? diameter : 220.0
+
+        var resolvedAnchor: FacecamAnchor = .bottomRight
+
+        if let bubbleWindow = NSApp.windows.first(where: { $0.title == "Camera Preview" }) {
+            let windowFrame = bubbleWindow.frame
+            let targetScreen: NSScreen = {
+                if let source,
+                   let screen = NSScreen.screens.first(where: { "\($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] ?? "")" == source.id }) {
+                    return screen
+                }
+                return bubbleWindow.screen ?? NSScreen.main ?? NSScreen.screens.first ?? NSScreen()
+            }()
+
+            let screenBounds = targetScreen.frame
+            if screenBounds.width > 0 && screenBounds.height > 0 {
+                let relX = (windowFrame.midX - screenBounds.minX) / screenBounds.width
+                let relYFromTop = (screenBounds.maxY - windowFrame.midY) / screenBounds.height
+                resolvedAnchor = FacecamAnchor.from(relX: relX, relYFromTop: relYFromTop)
+            }
+        }
+
+        let screenLength = (NSScreen.main?.frame.height ?? 1080.0)
+        let sizePercent = max(14.0, min(36.0, (resolvedDiameter / screenLength) * 100.0))
+
+        return FacecamSettings(
+            enabled: true,
+            shape: shapeString,
+            size: sizePercent,
+            cornerRadius: shapeString == "circle" ? 100 : (shapeString == "square" ? 16 : 12),
+            borderWidth: 0,
+            borderColor: "#FFFFFF",
+            margin: 4,
+            anchor: resolvedAnchor.rawValue
+        )
+    }
+
     private func recordingSession(for document: ProjectDocument, recordingURL: URL) -> RecordingSession {
         if let recordingSession = document.recordingSession {
             return recordingSession
@@ -2589,6 +2631,7 @@ final class AppModel: ObservableObject {
                 try await self.facecamRecorder.prepare(cameraDeviceID: options.cameraDeviceID)
                 if !Task.isCancelled {
                     self.facecamPrewarmTask = nil
+                    self.objectWillChange.send()
                 }
             } catch {
                 guard !Task.isCancelled else { return }

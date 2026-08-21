@@ -18,7 +18,7 @@ struct TimelineSelectionSidebar: View {
 
             selectionFooter
         }
-        .studioEditorPaneChrome()
+        .studioEditorPaneChrome(bg: Theme.sidebarBg)
     }
 
     private var selectionHeader: some View {
