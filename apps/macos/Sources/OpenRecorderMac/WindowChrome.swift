@@ -133,7 +133,7 @@ final class WindowConfigurationView: NSView {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.level = .floating
+        window.level = .statusBar
         window.collectionBehavior = [
             .canJoinAllSpaces,
             .fullScreenAuxiliary,

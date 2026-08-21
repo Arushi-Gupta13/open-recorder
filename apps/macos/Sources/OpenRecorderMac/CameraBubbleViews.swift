@@ -93,7 +93,7 @@ struct CameraBubbleWindowView: View {
 
     private func updateWindowFrame(newDimensions: CGSize) {
         DispatchQueue.main.async {
-            guard let window = NSApp.windows.first(where: { $0.title == "Camera Preview" }) else { return }
+            guard let window = NSApp.windows.first(where: { $0.title == "Camera Preview" || $0.title == "Camera Bubble" }) else { return }
             let totalWidth = newDimensions.width + 28
             let totalHeight = newDimensions.height + 70
             var frame = window.frame
@@ -101,6 +101,7 @@ struct CameraBubbleWindowView: View {
             frame.size = CGSize(width: totalWidth, height: totalHeight)
             frame.origin.y += (oldHeight - totalHeight)
             window.setFrame(frame, display: true, animate: false)
+            window.orderFrontRegardless()
         }
     }
 
