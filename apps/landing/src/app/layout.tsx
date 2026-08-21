@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactElement, ReactNode } from "react";
-import "./globals.css";
+import "./redesign/design-tokens.css";
+import "./redesign/redesign.css";
 
 export const metadata: Metadata = {
   title: "Open Recorder | Native macOS capture studio",
@@ -15,7 +16,7 @@ export default function RootLayout({
 }>): ReactElement {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="rd-root dark">{children}</body>
     </html>
   );
 }

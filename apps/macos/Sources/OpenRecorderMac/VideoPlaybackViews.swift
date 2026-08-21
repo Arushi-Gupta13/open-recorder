@@ -181,51 +181,46 @@ struct VideoPreviewPanel: View {
     }
 
     private var previewControlRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             cropButton
             Rectangle()
-                .fill(Theme.borderSubtle)
-                .frame(width: 1, height: 20)
+                .fill(Theme.borderStrong.opacity(0.40))
+                .frame(width: 1, height: 14)
             previewAspectMenu
         }
-        .padding(4)
-        .background(Theme.scrim.opacity(0.72), in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(Theme.borderSubtle, lineWidth: 1)
-        }
+        .frame(height: 32)
     }
 
     private var cropButton: some View {
-        StudioButton(hitTarget: .capsule, help: "Crop", action: onCropVideo) {
+        Button(action: onCropVideo) {
             Label("Crop", systemImage: "crop")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color.primary.opacity(0.86))
-                .padding(.horizontal, 11)
-                .frame(height: 30)
-                .background(Color.white.opacity(0.001), in: Capsule())
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.fg)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .help("Crop video")
     }
 
     private var previewAspectMenu: some View {
-        StudioButton(hitTarget: .capsule, help: "Preview aspect ratio") {
+        Button {
             isPreviewAspectDropdownPresented.toggle()
         } label: {
-            HStack(spacing: 7) {
+            HStack(spacing: 6) {
                 PreviewAspectGlyph(preset: previewAspectPreset, isSelected: true)
-                    .frame(width: 17, height: 17)
+                    .frame(width: 15, height: 15)
                 Text(previewAspectPreset.ratioLabel)
+                    .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(Color.primary.opacity(0.58))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(Theme.fgSubtle)
             }
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Color.primary.opacity(0.86))
-            .padding(.horizontal, 11)
-            .frame(height: 30)
-            .background(Color.white.opacity(0.001), in: Capsule())
+            .foregroundStyle(Theme.fg)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .help("Preview aspect ratio")
         .popover(isPresented: $isPreviewAspectDropdownPresented, arrowEdge: .top) {
             PreviewAspectDropdown(
                 selection: $previewAspectPreset,
@@ -293,8 +288,8 @@ struct VideoPreviewPanel: View {
                         offsetMs: recordingSession?.facecamOffsetMs,
                         settings: facecamSettings
                     )
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .transformEffect(facecamZoomTransform)
+                    .frame(width: recordingFrame.width, height: recordingFrame.height)
+                    .offset(x: recordingFrame.minX, y: recordingFrame.minY)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -347,10 +342,10 @@ struct VideoPreviewPanel: View {
                 .font(.system(size: 11, weight: .semibold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .background(Color.black.opacity(0.38), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(.ultraThinMaterial, in: Rectangle())
+                .background(Color.black.opacity(0.38), in: Rectangle())
                 .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    Rectangle()
                         .stroke(Color.white.opacity(0.14), lineWidth: 1)
                 }
                 .foregroundStyle(Color.white)
@@ -643,9 +638,9 @@ struct EmptyEditorState: View {
                 .font(.system(size: 32))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 66, height: 66)
-                .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
+                .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: Theme.radiusLg, style: .continuous)
                         .stroke(Theme.accent.opacity(0.22))
                 }
             Text("No Recording Open")
@@ -716,9 +711,9 @@ struct PlaybackPreview: View {
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
             .clipped()
             .background(letterboxFill.color)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: Theme.radiusMd, style: .continuous)
                     .stroke(Theme.border)
             }
         }
@@ -743,7 +738,7 @@ struct PlaybackPreview: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 10))
+                    .background(Color.black.opacity(0.62), in: RoundedRectangle(cornerRadius: Theme.radiusSm, style: .continuous))
                     .position(x: annotation.x * size.width, y: annotation.y * size.height)
                     .shadow(color: .black.opacity(0.45), radius: 8, y: 4)
             }
@@ -763,41 +758,58 @@ struct FacecamOverlayLayout {
         }
 
         let baseLength = min(containerSize.width, containerSize.height)
-        let side = max(1, baseLength * CGFloat(resolved.size / 100))
-        let margin = baseLength * CGFloat(resolved.margin / 100)
-        let halfSide = side / 2
+        let baseSide = max(1, min(baseLength * CGFloat(resolved.size / 100), baseLength))
+        let width: CGFloat
+        let height: CGFloat
+        if resolved.normalizedShape == "rectangle" {
+            width = min(containerSize.width, baseSide * 1.35)
+            height = width * (9.0 / 16.0)
+        } else {
+            width = baseSide
+            height = baseSide
+        }
+
+        let margin = max(0, baseLength * CGFloat(resolved.margin / 100))
+        let halfWidth = width / 2
+        let halfHeight = height / 2
         let x: CGFloat
         let y: CGFloat
 
         switch resolved.resolvedAnchor {
         case .topLeft, .left, .bottomLeft:
-            x = margin + halfSide
+            x = margin + halfWidth
         case .top, .center, .bottom:
             x = containerSize.width / 2
         case .topRight, .right, .bottomRight:
-            x = containerSize.width - margin - halfSide
+            x = containerSize.width - margin - halfWidth
         }
 
         switch resolved.resolvedAnchor {
         case .topLeft, .top, .topRight:
-            y = margin + halfSide
+            y = margin + halfHeight
         case .left, .center, .right:
             y = containerSize.height / 2
         case .bottomLeft, .bottom, .bottomRight:
-            y = containerSize.height - margin - halfSide
+            y = containerSize.height - margin - halfHeight
         }
 
-        let rawX = x - halfSide
-        let rawY = y - halfSide
-        let clampedX = max(0, min(rawX, containerSize.width - side))
-        let clampedY = max(0, min(rawY, containerSize.height - side))
+        let rawX = x - halfWidth
+        let rawY = y - halfHeight
+        let safeMinX: CGFloat = 0
+        let safeMaxX = max(safeMinX, containerSize.width - width)
+        let safeMinY: CGFloat = 0
+        let safeMaxY = max(safeMinY, containerSize.height - height)
 
-        return CGRect(
-            x: clampedX,
-            y: clampedY,
-            width: min(side, containerSize.width),
-            height: min(side, containerSize.height)
-        )
+        let clampedX = max(safeMinX, min(rawX, safeMaxX))
+        let clampedY = max(safeMinY, min(rawY, safeMaxY))
+
+        return CGRect(x: clampedX, y: clampedY, width: width, height: height)
+    }
+
+    static func normalizedRect(for settings: FacecamSettings) -> CGRect {
+        let dummySize = CGSize(width: 1000, height: 1000)
+        let f = frame(in: dummySize, settings: settings)
+        return CGRect(x: f.minX / 1000, y: f.minY / 1000, width: f.width / 1000, height: f.height / 1000)
     }
 }
 
@@ -967,15 +979,15 @@ private struct PreviewAspectDropdown: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .background(selection == option ? Color.white.opacity(0.10) : Color.clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(selection == option ? Color.white.opacity(0.10) : Color.clear, in: Rectangle())
             }
         }
         .padding(7)
         .frame(width: 224)
         .background(Theme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(Rectangle())
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            Rectangle()
                 .stroke(Theme.borderStrong, lineWidth: 1)
         }
     }
@@ -995,11 +1007,11 @@ private struct PreviewAspectGlyph: View {
             let resolvedWidth = min(width, maxWidth)
             let resolvedHeight = min(height, maxHeight)
 
-            RoundedRectangle(cornerRadius: min(resolvedWidth, resolvedHeight) * 0.22, style: .continuous)
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
                 .fill(preset == .auto ? Color.clear : (isSelected ? Color.white.opacity(0.94) : Color.white.opacity(0.22)))
                 .overlay {
                     if preset == .auto {
-                        RoundedRectangle(cornerRadius: min(resolvedWidth, resolvedHeight) * 0.22, style: .continuous)
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
                             .stroke(Color.white.opacity(isSelected ? 0.95 : 0.34), style: StrokeStyle(lineWidth: 1.2, dash: [3, 2]))
                     }
                 }
@@ -1133,12 +1145,18 @@ final class PlayerLayerView: NSView {
         contentLayer.position = .zero
         contentLayer.isGeometryFlipped = true
 
-        playbackLayer.videoGravity = .resizeAspect
+        playbackLayer.videoGravity = videoGravity
         playbackLayer.backgroundColor = NSColor.clear.cgColor
 
         layer = rootLayer
         rootLayer.addSublayer(contentLayer)
         contentLayer.addSublayer(playbackLayer)
+    }
+
+    var videoGravity: AVLayerVideoGravity = .resizeAspect {
+        didSet {
+            playbackLayer.videoGravity = videoGravity
+        }
     }
 
     private func layoutPlayerLayers() {
@@ -1175,11 +1193,13 @@ struct NativeVideoPlayer: NSViewRepresentable {
 
     func makeNSView(context: Context) -> PlayerLayerView {
         let view = PlayerLayerView()
+        view.videoGravity = .resizeAspect
         view.update(player: playback.player, zoomTransform: zoomTransform)
         return view
     }
 
     func updateNSView(_ nsView: PlayerLayerView, context: Context) {
+        nsView.videoGravity = .resizeAspect
         nsView.update(player: playback.player, zoomTransform: zoomTransform)
     }
 
@@ -1193,11 +1213,13 @@ struct FacecamPlayerView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> PlayerLayerView {
         let view = PlayerLayerView()
+        view.videoGravity = .resizeAspectFill
         view.update(player: player)
         return view
     }
 
     func updateNSView(_ nsView: PlayerLayerView, context: Context) {
+        nsView.videoGravity = .resizeAspectFill
         nsView.update(player: player)
     }
 

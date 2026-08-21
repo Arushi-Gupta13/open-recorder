@@ -300,7 +300,7 @@ struct ProjectVideoEditorState: Codable, Equatable, Hashable {
     init(
         background: BackgroundStyle = BackgroundPresets.default,
         padding: Double = 18,
-        borderRadius: Double = 12,
+        borderRadius: Double = 0,
         shadow: Double = 0.35,
         backgroundBlur: Double = 0,
         inset: Double = 0,
@@ -471,26 +471,36 @@ enum FacecamAnchor: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
-    static func resolve(_ rawValue: String) -> FacecamAnchor {
-        FacecamAnchor(rawValue: rawValue) ?? .bottomRight
-    }
+    static func from(relX: CGFloat, relYFromTop: CGFloat) -> FacecamAnchor {
+        let col: Int
+        if relX < 0.33 {
+            col = 0
+        } else if relX > 0.67 {
+            col = 2
+        } else {
+            col = 1
+        }
 
-    static func from(relX: Double, relYFromTop: Double) -> FacecamAnchor {
-        let isLeft = relX < 0.33
-        let isRight = relX > 0.66
-        let isTop = relYFromTop < 0.33
-        let isBottom = relYFromTop > 0.66
+        let row: Int
+        if relYFromTop < 0.33 {
+            row = 0
+        } else if relYFromTop > 0.67 {
+            row = 2
+        } else {
+            row = 1
+        }
 
-        switch (isTop, isBottom, isLeft, isRight) {
-        case (true, false, true, false): return .topLeft
-        case (true, false, false, false): return .top
-        case (true, false, false, true): return .topRight
-        case (false, false, true, false): return .left
-        case (false, false, false, true): return .right
-        case (false, true, true, false): return .bottomLeft
-        case (false, true, false, false): return .bottom
-        case (false, true, false, true): return .bottomRight
-        default: return .center
+        switch (row, col) {
+        case (0, 0): return .topLeft
+        case (0, 1): return .top
+        case (0, 2): return .topRight
+        case (1, 0): return .left
+        case (1, 1): return .center
+        case (1, 2): return .right
+        case (2, 0): return .bottomLeft
+        case (2, 1): return .bottom
+        case (2, 2): return .bottomRight
+        default: return .bottomRight
         }
     }
 }
@@ -509,11 +519,11 @@ struct FacecamSettings: Codable, Hashable {
         FacecamSettings(
             enabled: enabled,
             shape: normalizedShape,
-            size: max(12, min(size, 40)),
+            size: max(8, min(size, 75)),
             cornerRadius: max(0, min(cornerRadius, 100)),
             borderWidth: max(0, min(borderWidth, 16)),
             borderColor: normalizedBorderColor,
-            margin: max(0, min(margin, 12)),
+            margin: max(0, min(margin, 24)),
             anchor: FacecamAnchor.resolve(anchor).rawValue
         )
     }
@@ -535,6 +545,11 @@ struct FacecamSettings: Codable, Hashable {
         let value = borderColor.trimmingCharacters(in: .whitespacesAndNewlines)
         return value.isEmpty ? "#FFFFFF" : value
     }
+}
+
+struct CameraRecordingEvent: Codable, Equatable {
+    var timestamp: Double
+    var settings: FacecamSettings
 }
 
 struct RecordingSession: Codable, Hashable {
@@ -909,6 +924,8 @@ enum NativeWindowCommandAction: Equatable {
     case showMicrophoneSelector
     case showCameraSelector
     case showAreaSelector
+    case showCameraBubble
+    case closeCameraBubble
     case showStudio
     case closeCaptureSetup
     case closeSourceSelector
