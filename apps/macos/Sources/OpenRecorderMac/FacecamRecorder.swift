@@ -47,9 +47,7 @@ final class FacecamRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
     func prepare(cameraDeviceID: String?) async throws {
         if preparedCameraDeviceID == cameraDeviceID,
            let session,
-           let movieOutput,
-           session.isRunning,
-           !movieOutput.isRecording {
+           session.isRunning {
             return
         }
 
