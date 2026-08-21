@@ -23,10 +23,14 @@ enum RecordingCountdownTargetResolver {
                let screen = screens.first(where: { $0.displayID == displayID }) {
                 return screen.frame
             }
+            if let displayIndex = source.displayIndex,
+               displayIndex > 0, displayIndex <= screens.count {
+                return screens[displayIndex - 1].frame
+            }
             return fallback
         case .area:
             guard let area = source.area else { return fallback }
-            return CGRect(x: area.x, y: area.y, width: max(area.width, 1), height: max(area.height, 1))
+            return CGRect(x: CGFloat(area.x), y: CGFloat(area.y), width: max(CGFloat(area.width), 1), height: max(CGFloat(area.height), 1))
         case .window:
             guard let windowFrame, windowFrame.width > 1, windowFrame.height > 1 else {
                 return fallback
@@ -52,7 +56,11 @@ enum RecordingCountdownTargetResolver {
     private static func fallbackFrame(for source: CaptureSource, screens: [RecordingOverlayScreen]) -> CGRect {
         if let displayID = source.displayID,
            let screen = screens.first(where: { $0.displayID == displayID }) {
-            return screen.frame
+                return screen.frame
+        }
+        if let displayIndex = source.displayIndex,
+           displayIndex > 0, displayIndex <= screens.count {
+            return screens[displayIndex - 1].frame
         }
         return screens.first?.frame ?? CGRect(x: 0, y: 0, width: 900, height: 600)
     }
@@ -104,8 +112,10 @@ final class RecordingCountdownOverlayController {
 
         for value in [3, 2, 1] {
             state.count = value
+            RecordingSoundEffects.shared.playCountdownTick(for: value)
             try await Task.sleep(nanoseconds: 1_000_000_000)
         }
+        RecordingSoundEffects.shared.playRecordingStarted()
     }
 
     func dismiss() {
@@ -138,7 +148,10 @@ final class RecordingCountdownOverlayController {
         ]
         window.contentView = NSHostingView(rootView: RecordingCountdownOverlay(state: state))
         self.window = window
+        window.setFrame(frame, display: true)
+        window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
@@ -157,28 +170,43 @@ private struct RecordingCountdownOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.34)
+            Color.black.opacity(0.38)
                 .ignoresSafeArea()
 
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(Color.white.opacity(0.70), lineWidth: 4)
-                .padding(18)
+            RoundedRectangle(cornerRadius: Theme.radiusXl, style: .continuous)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.80), Color.white.opacity(0.25)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 3
+                )
+                .padding(16)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 14) {
                 Text("\(state.count)")
-                    .font(.system(size: 132, weight: .bold, design: .rounded))
+                    .font(.system(size: 140, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.white)
-                    .shadow(color: Color.black.opacity(0.55), radius: 18, y: 8)
+                    .shadow(color: Color.black.opacity(0.60), radius: 24, y: 8)
+                    .id(state.count)
+                    .transition(.scale(scale: 1.25).combined(with: .opacity))
 
                 Text("Recording \(state.sourceName)")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.82))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.92))
                     .lineLimit(1)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.36), in: Capsule())
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 9)
+                    .background(Color.black.opacity(0.65), in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(Color.white.opacity(0.20), lineWidth: 1)
+                    }
+                    .shadow(color: Color.black.opacity(0.40), radius: 8, y: 4)
             }
+            .animation(.spring(response: 0.32, dampingFraction: 0.68), value: state.count)
         }
     }
 }

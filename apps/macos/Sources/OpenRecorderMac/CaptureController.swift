@@ -161,13 +161,22 @@ enum WindowSourceFilter {
     }
 
     private static let blockedOwnerNames: Set<String> = [
+        "airplay",
+        "airplayxpchelper",
         "control center",
+        "coreauthui",
         "dock",
         "loginwindow",
         "notification center",
+        "quicklookuiservice",
+        "screencapture",
+        "screencaptured",
+        "screencaptureui",
         "spotlight",
         "systemuiserver",
+        "talagent",
         "textinputmenuagent",
+        "universalaccessd",
         "wallpaper",
         "window server"
     ]
@@ -180,9 +189,13 @@ enum WindowSourceFilter {
 
     private static let blockedBundlePrefixes: [String] = [
         "com.apple.controlcenter",
+        "com.apple.coreauthui",
         "com.apple.dock",
         "com.apple.loginwindow",
         "com.apple.notificationcenterui",
+        "com.apple.quicklook.ui.helper",
+        "com.apple.screencapture",
+        "com.apple.screencaptureui",
         "com.apple.spotlight",
         "com.apple.systemuiserver",
         "com.apple.textinputmenuagent",
@@ -757,7 +770,7 @@ final class CaptureController: ObservableObject {
             return nil
         }
 
-        return thumbnailData(from: image, maxSize: CGSize(width: 320, height: 180))
+        return thumbnailData(from: image, maxSize: CGSize(width: 1280, height: 720))
     }
 
     private func captureImage(contentFilter: SCContentFilter, configuration: SCStreamConfiguration) async throws -> CGImage {
@@ -775,7 +788,7 @@ final class CaptureController: ObservableObject {
     }
 
     private func thumbnailSize(sourceWidth: Int, sourceHeight: Int) -> CGSize {
-        let maxSize = CGSize(width: 320, height: 180)
+        let maxSize = CGSize(width: 1280, height: 720)
         let width = max(CGFloat(sourceWidth), 1)
         let height = max(CGFloat(sourceHeight), 1)
         let scale = min(maxSize.width / width, maxSize.height / height, 1)
@@ -800,6 +813,6 @@ final class CaptureController: ObservableObject {
               let bitmap = NSBitmapImageRep(data: tiff) else {
             return nil
         }
-        return bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.72])
+        return bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.88])
     }
 }
