@@ -92,7 +92,7 @@ enum ScreencaptureRegionMapper {
     private static func primaryDisplayFrame() -> CGRect {
         NSScreen.screens.first { screen in
             screen.frame.origin == .zero
-        }?.frame ?? NSScreen.main?.frame ?? NSScreen.screens.first?.frame ?? .zero
+        }?.frame ?? NSScreen.main?.frame ?? NSScreen.screens.first?.frame ?? CGRect(x: 0, y: 0, width: 1920, height: 1080)
     }
 }
 
