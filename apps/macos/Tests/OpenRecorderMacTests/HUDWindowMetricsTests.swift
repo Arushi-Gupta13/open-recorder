@@ -68,4 +68,36 @@ final class HUDWindowMetricsTests: XCTestCase {
         XCTAssertEqual(size.width, HUDWindowMetrics.defaultSize.width)
         XCTAssertEqual(size.height, HUDWindowMetrics.height)
     }
+
+    func testCameraBubbleWindowChromeBehaviorFollowsMultiSpaceFloating() {
+        let behavior = CameraBubbleWindowChrome.collectionBehavior
+
+        XCTAssertTrue(behavior.contains(.canJoinAllSpaces))
+        XCTAssertTrue(behavior.contains(.fullScreenAuxiliary))
+        XCTAssertTrue(behavior.contains(.ignoresCycle))
+        XCTAssertEqual(CameraBubbleWindowChrome.level, .statusBar)
+    }
+
+    func testCameraBubbleWindowChromeSafeOriginClamping() {
+        let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let windowSize = CGSize(width: 240, height: 240)
+
+        let initialOrigin = CameraBubbleWindowChrome.safeOrigin(
+            for: windowSize,
+            currentOrigin: .zero,
+            visibleFrame: screen,
+            margin: 32
+        )
+        XCTAssertEqual(initialOrigin.x, 1440 - 240 - 32)
+        XCTAssertEqual(initialOrigin.y, 900 - 240 - 32)
+
+        let clampedOrigin = CameraBubbleWindowChrome.safeOrigin(
+            for: windowSize,
+            currentOrigin: CGPoint(x: 2000, y: 1200),
+            visibleFrame: screen,
+            margin: 32
+        )
+        XCTAssertEqual(clampedOrigin.x, 1440 - 240 - 32)
+        XCTAssertEqual(clampedOrigin.y, 900 - 240 - 32)
+    }
 }
