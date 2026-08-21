@@ -924,18 +924,25 @@ final class AppModel: ObservableObject {
 
         if let selectedSource {
             let resolved = resolveSelection(previous: selectedSource, in: capture.sources)
-            dispatch(.refreshSelectedSource(resolved ?? capture.sources.first(where: { $0.kind == .display })))
-        } else if let primaryDisplay = capture.sources.first(where: { $0.kind == .display }) {
+                ?? capture.sources.first(where: { $0.kind == .display })
+                ?? capture.sources.first
+            dispatch(.refreshSelectedSource(resolved))
+        } else if !hasAttemptedStoredCaptureSetupRestore {
+            hasAttemptedStoredCaptureSetupRestore = true
             let restoredSource = storedCaptureSetup.sourceReference?.resolve(
                 in: capture.sources,
                 displayFrames: NSScreen.captureDisplayFramesByID
-            ) ?? primaryDisplay
+            ) ?? capture.sources.first(where: { $0.kind == .display }) ?? capture.sources.first
             dispatch(.restoreSetup(
                 storedCaptureSetup.mode,
                 restoredSource,
                 preferredSourceKind: storedCaptureSetup.preferredSourceKind
             ))
-            dispatch(.selectSource(restoredSource))
+            if let restoredSource {
+                dispatch(.selectSource(restoredSource))
+            }
+        } else if let defaultSource = capture.sources.first(where: { $0.kind == .display }) ?? capture.sources.first {
+            dispatch(.selectSource(defaultSource))
         }
     }
 
