@@ -25,6 +25,37 @@ enum HUDWindowChrome {
     static let activeSpaceSyncDelay: TimeInterval = 0.18
 }
 
+enum CameraBubbleWindowChrome {
+    static let collectionBehavior: NSWindow.CollectionBehavior = [
+        .canJoinAllSpaces,
+        .fullScreenAuxiliary,
+        .ignoresCycle
+    ]
+    static let level: NSWindow.Level = .statusBar
+    static let activeSpaceSyncDelay: TimeInterval = 0.18
+
+    static func safeOrigin(
+        for windowSize: CGSize,
+        currentOrigin: CGPoint,
+        visibleFrame: CGRect,
+        margin: CGFloat = 32
+    ) -> CGPoint {
+        guard visibleFrame.width > 0, visibleFrame.height > 0 else { return currentOrigin }
+        let minX = visibleFrame.minX + margin
+        let maxX = max(minX, visibleFrame.maxX - windowSize.width - margin)
+        let minY = visibleFrame.minY + margin
+        let maxY = max(minY, visibleFrame.maxY - windowSize.height - margin)
+
+        if currentOrigin.y < minY || currentOrigin == .zero {
+            return CGPoint(x: maxX, y: maxY)
+        }
+
+        let clampedX = max(minX, min(currentOrigin.x, maxX))
+        let clampedY = max(minY, min(currentOrigin.y, maxY))
+        return CGPoint(x: clampedX, y: clampedY)
+    }
+}
+
 struct WindowConfigurator: NSViewRepresentable {
     var role: NativeWindowRole
     var preferredSize: CGSize?
@@ -133,12 +164,8 @@ final class WindowConfigurationView: NSView {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.level = .statusBar
-        window.collectionBehavior = [
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .ignoresCycle
-        ]
+        window.level = CameraBubbleWindowChrome.level
+        window.collectionBehavior = CameraBubbleWindowChrome.collectionBehavior
         window.isMovableByWindowBackground = true
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
@@ -146,16 +173,14 @@ final class WindowConfigurationView: NSView {
         [.closeButton, .miniaturizeButton, .zoomButton].forEach { button in
             window.standardWindowButton(button)?.isHidden = true
         }
-        if window.frame.origin.y < 50 || window.frame.origin == .zero {
-            if let screen = window.screen ?? NSScreen.main {
-                let visibleFrame = screen.visibleFrame
-                let windowSize = window.frame.size
-                let origin = CGPoint(
-                    x: visibleFrame.maxX - windowSize.width - 32,
-                    y: visibleFrame.maxY - windowSize.height - 32
-                )
-                window.setFrameOrigin(origin)
-            }
+        if let screen = window.screen ?? NSScreen.main {
+            let visibleFrame = screen.visibleFrame
+            let origin = CameraBubbleWindowChrome.safeOrigin(
+                for: window.frame.size,
+                currentOrigin: window.frame.origin,
+                visibleFrame: visibleFrame
+            )
+            window.setFrameOrigin(origin)
         }
         window.orderFrontRegardless()
     }
