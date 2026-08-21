@@ -471,10 +471,6 @@ enum FacecamAnchor: String, CaseIterable, Identifiable, Codable, Hashable {
         }
     }
 
-    static func resolve(_ rawValue: String) -> FacecamAnchor {
-        FacecamAnchor(rawValue: rawValue) ?? .bottomRight
-    }
-
     static func from(relX: CGFloat, relYFromTop: CGFloat) -> FacecamAnchor {
         let col: Int
         if relX < 0.33 {
