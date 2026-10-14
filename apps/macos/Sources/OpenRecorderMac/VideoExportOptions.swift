@@ -355,8 +355,7 @@ struct VideoExportOptions: Equatable {
         inset: Double,
         insetColor: SerializableColor,
         insetOpacity: Double,
-        insetBalance: VideoInsetBalance,
-        browserFrame: BrowserFrameSettings = .default
+        insetBalance: VideoInsetBalance
     ) -> VideoExportOptions {
         var copy = self
         copy.styling = VideoBackgroundStyling(
@@ -370,8 +369,7 @@ struct VideoExportOptions: Equatable {
                 color: insetColor,
                 opacity: max(0, min(insetOpacity, 1)),
                 balance: insetBalance.clamped
-            ),
-            browserFrame: browserFrame.clamped
+            )
         )
         return copy
     }

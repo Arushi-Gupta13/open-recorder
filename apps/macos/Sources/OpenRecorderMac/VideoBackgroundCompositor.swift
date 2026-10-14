@@ -1,7 +1,6 @@
 import AVFoundation
 import AppKit
 import CoreImage
-import CoreText
 import CoreMedia
 import CoreText
 import CoreVideo
@@ -89,7 +88,6 @@ struct VideoBackgroundStyling: Equatable {
     var shadowIntensity: Double
     var backgroundBlurRatio: Double
     var inset: VideoInsetStyling
-    var browserFrame: BrowserFrameSettings
 
     static let none = VideoBackgroundStyling(
         background: .transparent,
@@ -97,8 +95,7 @@ struct VideoBackgroundStyling: Equatable {
         borderRadiusRatio: 0,
         shadowIntensity: 0,
         backgroundBlurRatio: 0,
-        inset: .none,
-        browserFrame: .default
+        inset: .none
     )
 
     var isPassthrough: Bool {
@@ -107,8 +104,7 @@ struct VideoBackgroundStyling: Equatable {
             borderRadiusRatio == 0 &&
             shadowIntensity == 0 &&
             backgroundBlurRatio == 0 &&
-            !inset.isEnabled &&
-            !browserFrame.isEnabled
+            !inset.isEnabled
     }
 }
 
@@ -380,31 +376,12 @@ final class VideoBackgroundCompositor: NSObject, AVVideoCompositing, @unchecked 
             height: innerSize.height
         )
 
-        let sourceTime = instruction.editPlan.sourceTime(forOutputTime: compositionTime) ?? compositionTime
-        let activeCameraSettings = instruction.edits.activeCameraSettings(
-            at: sourceTime,
-            duration: max(instruction.editPlan.segments.last?.sourceEnd ?? instruction.timeRange.duration.seconds, 0),
-            fallback: instruction.facecamFallbackSettings
-        )
-        // FacecamOverlayLayout is expressed in the top-left coordinate system used by
-        // SwiftUI. Core Image is bottom-left, so flip the vertical origin here.
-        let previewScreenRect = FacecamOverlayLayout.screenFrame(
-            in: innerRect.size,
-            settings: activeCameraSettings ?? defaultFacecamSettings(enabled: false)
-        )
-        let screenRect = CGRect(
-            x: innerRect.minX + previewScreenRect.minX,
-            y: innerRect.minY + innerRect.height - previewScreenRect.maxY,
-            width: previewScreenRect.width,
-            height: previewScreenRect.height
-        )
-
         let sourceSize = instruction.cropRect.size
-        let frameScale = min(screenRect.width / max(sourceSize.width, 1), screenRect.height / max(sourceSize.height, 1))
+        let frameScale = min(innerSize.width / max(sourceSize.width, 1), innerSize.height / max(sourceSize.height, 1))
         let frameSize = CGSize(width: sourceSize.width * frameScale, height: sourceSize.height * frameScale)
         let frameRect = CGRect(
-            x: screenRect.midX - frameSize.width / 2,
-            y: screenRect.midY - frameSize.height / 2,
+            x: innerRect.midX - frameSize.width / 2,
+            y: innerRect.midY - frameSize.height / 2,
             width: frameSize.width,
             height: frameSize.height
         )
@@ -520,13 +497,6 @@ final class VideoBackgroundCompositor: NSObject, AVVideoCompositing, @unchecked 
         composed = maskedSource.composited(over: composed)
         if let cursor = makeCursorLayer(for: instruction, compositionTime: compositionTime, contentRect: contentRect) {
             composed = cursor.composited(over: composed)
-        }
-        if instruction.styling.browserFrame.clamped.isEnabled {
-            let browserChrome = makeBrowserChromeLayer(
-                url: instruction.styling.browserFrame.clamped.url,
-                in: screenRect
-            )
-            composed = browserChrome.composited(over: composed)
         }
 
         composed = compositeAnnotations(over: composed, instruction: instruction, compositionTime: compositionTime)
@@ -969,72 +939,6 @@ final class VideoBackgroundCompositor: NSObject, AVVideoCompositing, @unchecked 
         )
         let fill = CIImage(color: color).cropped(to: rect)
         return applyRoundedMask(fill, cornerRadius: cornerRadius, in: rect)
-    }
-
-    private func makeBrowserChromeLayer(url: String, in screenRect: CGRect) -> CIImage {
-        let height = min(44, max(28, screenRect.height * 0.08))
-        let rect = CGRect(x: screenRect.minX, y: screenRect.maxY - height, width: screenRect.width, height: height)
-        let width = max(Int(rect.width.rounded()), 1)
-        let pixelHeight = max(Int(rect.height.rounded()), 1)
-        let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
-        guard let context = CGContext(
-            data: nil,
-            width: width,
-            height: pixelHeight,
-            bitsPerComponent: 8,
-            bytesPerRow: 0,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return CIImage.empty()
-        }
-
-        let scaleX = CGFloat(width) / max(rect.width, 1)
-        let scaleY = CGFloat(pixelHeight) / max(rect.height, 1)
-        context.scaleBy(x: scaleX, y: scaleY)
-        context.setFillColor(CGColor(srgbRed: 0.10, green: 0.11, blue: 0.14, alpha: 0.96))
-        context.fill(CGRect(origin: .zero, size: rect.size))
-
-        let dotRadius = max(3, height * 0.105)
-        let dotY = height / 2
-        for (index, color) in [
-            CGColor(srgbRed: 1, green: 0.37, blue: 0.34, alpha: 1),
-            CGColor(srgbRed: 1, green: 0.74, blue: 0.20, alpha: 1),
-            CGColor(srgbRed: 0.22, green: 0.78, blue: 0.35, alpha: 1)
-        ].enumerated() {
-            context.setFillColor(color)
-            context.fillEllipse(in: CGRect(x: height * 0.45 + CGFloat(index) * dotRadius * 2.65, y: dotY - dotRadius, width: dotRadius * 2, height: dotRadius * 2))
-        }
-
-        let addressX = height * 1.8
-        let addressRect = CGRect(x: addressX, y: height * 0.18, width: max(20, rect.width - addressX - height * 1.1), height: height * 0.64)
-        context.setFillColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.36))
-        context.addPath(CGPath(roundedRect: addressRect, cornerWidth: addressRect.height / 2, cornerHeight: addressRect.height / 2, transform: nil))
-        context.fillPath()
-        context.setStrokeColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.13))
-        context.setLineWidth(1)
-        context.addPath(CGPath(roundedRect: addressRect, cornerWidth: addressRect.height / 2, cornerHeight: addressRect.height / 2, transform: nil))
-        context.strokePath()
-
-        let text = NSAttributedString(
-            string: url,
-            attributes: [
-                .font: NSFont.monospacedSystemFont(ofSize: max(9, height * 0.29), weight: .medium),
-                .foregroundColor: NSColor(white: 1, alpha: 0.82)
-            ]
-        )
-        let textRect = CGRect(x: addressRect.minX + height * 0.52, y: addressRect.minY + max(2, height * 0.16), width: max(1, addressRect.width - height * 0.7), height: addressRect.height)
-        // Keep long URLs inside the address bar while preserving native text rendering.
-        context.saveGState()
-        context.clip(to: textRect)
-        context.textPosition = CGPoint(x: textRect.minX, y: textRect.minY)
-        CTLineDraw(CTLineCreateWithAttributedString(text), context)
-        context.restoreGState()
-
-        context.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.14))
-        context.fill(CGRect(x: 0, y: 0, width: rect.width, height: 1))
-        guard let image = context.makeImage() else { return CIImage.empty() }
-        return CIImage(cgImage: image).transformed(by: CGAffineTransform(translationX: rect.minX, y: rect.minY))
     }
 
     private func makeRoundedFill(color: CIColor, in rect: CGRect, cornerRadius: CGFloat) -> CIImage {
