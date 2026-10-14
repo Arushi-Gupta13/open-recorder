@@ -17,14 +17,15 @@ struct CameraLayoutControls: View {
                     .help("Maximum reduction from the camera’s normal size during a screen zoom. 0% keeps its size; the default is 15%.")
             }
             if layoutBinding.wrappedValue.hasScreenPanel {
-                CameraSidePicker(selection: sideBinding, layout: settings.resolvedLayout)
+                CameraSidePicker(selection: settings.resolvedLayout.isVerticalSplit ? aboveBinding : sideBinding,
+                                 layout: settings.resolvedLayout)
                 CameraScreenFitPicker(selection: screenFitBinding)
                 InspectorSwitch(title: "Match camera corners", isOn: matchCornersBinding)
                 if !settings.resolvedMatchCameraCorners {
                     InspectorSlider(title: "Screen Radius", valueText: "\(Int(settings.resolvedScreenCornerRadius))px",
                         value: screenRadiusBinding, range: 0...100, step: 1, onEditingChanged: onEditingChanged)
                 }
-                InspectorSlider(title: "Camera Width", valueText: "\(Int(widthBinding.wrappedValue))%",
+                InspectorSlider(title: settings.resolvedLayout.isVerticalSplit ? "Camera Height" : "Camera Width", valueText: "\(Int(widthBinding.wrappedValue))%",
                     value: widthBinding, range: 10...70, step: 1, onEditingChanged: onEditingChanged)
                 InspectorSlider(title: "Gap", valueText: "\(Int(gapBinding.wrappedValue))%",
                     value: gapBinding, range: 0...12, step: 1, onEditingChanged: onEditingChanged)
@@ -64,6 +65,9 @@ struct CameraLayoutControls: View {
     }
     private var sideBinding: Binding<Bool> {
         Binding(get: { settings.resolvedCameraOnLeft }, set: { settings.cameraOnLeft = $0 })
+    }
+    private var aboveBinding: Binding<Bool> {
+        Binding(get: { settings.resolvedCameraAbove }, set: { settings.cameraAbove = $0 })
     }
     private func value(_ keyPath: WritableKeyPath<FacecamSettings, Double?>,
                        resolved: KeyPath<FacecamSettings, Double>) -> Binding<Double> {
@@ -173,13 +177,16 @@ private struct CameraSidePicker: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 6), count: 2), spacing: 6) {
-                ForEach([true, false], id: \.self) { left in
-                    CameraOptionTile(title: left ? "Left" : "Right", help: left ? "Camera on the left" : "Camera on the right",
-                                     isSelected: selection == left) {
-                        selection = left
+                ForEach([true, false], id: \.self) { first in
+                    let vertical = layout.isVerticalSplit
+                    CameraOptionTile(title: first ? (vertical ? "Above" : "Left") : (vertical ? "Below" : "Right"),
+                                     help: first ? (vertical ? "Camera above the screen" : "Camera on the left") : (vertical ? "Camera below the screen" : "Camera on the right"),
+                                     isSelected: selection == first) {
+                        selection = first
                     } thumbnail: {
                         CameraLayoutThumbnail(layout: layout)
-                            .scaleEffect(x: left == (layout == .split) ? 1 : -1, y: 1)
+                            .scaleEffect(x: vertical ? 1 : (first == (layout == .split) ? 1 : -1),
+                                         y: vertical && !first ? -1 : 1)
                     }
                 }
             }
@@ -246,6 +253,11 @@ private struct CameraLayoutThumbnail: View {
                 HStack(spacing: 4) {
                     panel(width: 22, height: 28, camera: true)
                     panel(width: 22, height: 28, camera: false)
+                }
+            case .verticalSplit:
+                VStack(spacing: 4) {
+                    panel(width: 48, height: 12, camera: true)
+                    panel(width: 48, height: 12, camera: false)
                 }
             case .sideBySide:
                 HStack(spacing: 4) {

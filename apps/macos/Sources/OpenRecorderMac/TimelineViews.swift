@@ -1587,6 +1587,7 @@ private struct TimelineCameraClipItem: View {
         switch clip.settings.resolvedLayout {
         case .cameraOnly: return "camera.fill"
         case .split: return "rectangle.split.2x1"
+        case .verticalSplit: return "rectangle.split.1x2"
         case .sideBySide: return "rectangle.inset.filled.trailing"
         case .overlay: break
         }
@@ -1708,17 +1709,24 @@ private struct TimelineCameraClipItem: View {
                     }
                 }
             } else if clip.settings.resolvedLayout.hasScreenPanel {
-                Menu("Camera Side for This Segment") {
-                    ForEach([true, false], id: \.self) { left in
+                let isVertical = clip.settings.resolvedLayout.isVerticalSplit
+                Menu(isVertical ? "Camera Position for This Segment" : "Camera Side for This Segment") {
+                    ForEach([true, false], id: \.self) { first in
                         Button {
                             var settings = clip.settings
-                            settings.cameraOnLeft = left
+                            if isVertical {
+                                settings.cameraAbove = first
+                            } else {
+                                settings.cameraOnLeft = first
+                            }
                             edits.updateCameraClipSettings(id: clip.id, settings: settings)
                         } label: {
-                            if clip.settings.resolvedCameraOnLeft == left {
-                                Label(left ? "Left" : "Right", systemImage: "checkmark")
+                            let selected = isVertical ? clip.settings.resolvedCameraAbove == first : clip.settings.resolvedCameraOnLeft == first
+                            let title = isVertical ? (first ? "Above" : "Below") : (first ? "Left" : "Right")
+                            if selected {
+                                Label(title, systemImage: "checkmark")
                             } else {
-                                Text(left ? "Left" : "Right")
+                                Text(title)
                             }
                         }
                     }
