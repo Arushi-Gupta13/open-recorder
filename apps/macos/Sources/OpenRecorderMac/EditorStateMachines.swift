@@ -120,7 +120,8 @@ struct VideoEditorState: Equatable {
             inset: video.inset,
             insetColor: video.insetColor,
             insetOpacity: video.insetOpacity,
-            insetBalance: video.insetBalance
+            insetBalance: video.insetBalance,
+            browserFrame: video.browserFrame
         )
         .withScene(video.scene)
         .withAspectPreset(previewAspectPreset)

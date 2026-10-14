@@ -364,6 +364,33 @@ final class VideoPreviewLayoutTests: XCTestCase {
         XCTAssertEqual(rect.maxY, stageSize.height, accuracy: 0.001)
     }
 
+    func testStackedFacecamLayoutsReserveOppositeEndsOfVerticalCanvas() {
+        var settings = defaultFacecamSettings(enabled: true)
+        settings.layout = .cameraAbove
+        let canvas = CGSize(width: 360, height: 640)
+
+        let upperCamera = FacecamOverlayLayout.frame(in: canvas, settings: settings)
+        let lowerScreen = FacecamOverlayLayout.screenFrame(in: canvas, settings: settings)
+        XCTAssertEqual(upperCamera.minY, 0, accuracy: 0.001)
+        XCTAssertGreaterThan(lowerScreen.minY, 0)
+        XCTAssertLessThanOrEqual(upperCamera.maxY, lowerScreen.minY)
+
+        settings.layout = .cameraBelow
+        let lowerCamera = FacecamOverlayLayout.frame(in: canvas, settings: settings)
+        let upperScreen = FacecamOverlayLayout.screenFrame(in: canvas, settings: settings)
+        XCTAssertEqual(upperScreen.minY, 0, accuracy: 0.001)
+        XCTAssertGreaterThanOrEqual(lowerCamera.minY, upperScreen.maxY)
+    }
+
+    func testScreenOnlyLayoutHidesFacecamAndKeepsFullScreenCanvas() {
+        var settings = defaultFacecamSettings(enabled: true)
+        settings.layout = .screenOnly
+        let canvas = CGSize(width: 360, height: 640)
+
+        XCTAssertEqual(FacecamOverlayLayout.frame(in: canvas, settings: settings), .zero)
+        XCTAssertEqual(FacecamOverlayLayout.screenFrame(in: canvas, settings: settings), CGRect(origin: .zero, size: canvas))
+    }
+
     func testFacecamSettingsClampAndResolveAnchor() {
         let settings = FacecamSettings(
             enabled: true,
