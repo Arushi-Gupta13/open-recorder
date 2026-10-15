@@ -1585,6 +1585,7 @@ private struct TimelineCameraClipItem: View {
     private var shapeSymbolName: String {
         guard clip.settings.clamped.enabled else { return "camera.slash.fill" }
         switch clip.settings.resolvedLayout {
+        case .screenOnly: return "rectangle.fill"
         case .cameraOnly: return "camera.fill"
         case .split: return "rectangle.split.2x1"
         case .verticalSplit: return "rectangle.split.1x2"

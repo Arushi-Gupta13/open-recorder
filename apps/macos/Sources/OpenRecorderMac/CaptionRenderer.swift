@@ -17,11 +17,20 @@ enum CaptionRenderer {
         var lineHeight: CGFloat = 0
         // Shrink unusually long edited captions until all text fits in two lines; never truncate speech.
         for _ in 0..<60 {
-            let font = CTFontCreateWithName("Helvetica-Bold" as CFString, fontSize, nil)
-            let string = NSAttributedString(string: text, attributes: [
+            let fontName = style.fontFamily.isEmpty ? "Helvetica-Bold" : style.fontFamily
+            let font = CTFontCreateWithName(fontName as CFString, fontSize, nil)
+            var attrs: [NSAttributedString.Key: Any] = [
                 NSAttributedString.Key(kCTFontAttributeName as String): font,
                 NSAttributedString.Key(kCTForegroundColorAttributeName as String): color(style.textHex, alpha: 1)
-            ])
+            ]
+            if style.letterSpacing != 0 {
+                attrs[.kern] = style.letterSpacing * scale
+            }
+            if style.outlineWidth > 0 {
+                attrs[.strokeColor] = color(style.outlineHex, alpha: 1)
+                attrs[.strokeWidth] = -style.outlineWidth * scale
+            }
+            let string = NSAttributedString(string: text, attributes: attrs)
             let typesetter = CTTypesetterCreateWithAttributedString(string)
             var offset = 0
             lines = []
@@ -67,15 +76,36 @@ struct CaptionPreviewOverlay: View, Equatable {
     var segment: CaptionSegment?
     var style: CaptionStyle
     var size: CGSize
+    var currentTime: Double = 0
 
     var body: some View {
         if let segment, let raster = CaptionRenderer.render(text: segment.text, style: style, canvas: size) {
+            let enterProgress = style.transition == .cut ? 1.0 : min(1, max(0, (currentTime - segment.start) / max(0.001, style.transitionSpeed)))
             Image(decorative: raster.image, scale: 1)
                 .resizable()
                 .frame(width: raster.frame.width, height: raster.frame.height)
+                .modifier(CaptionTransitionModifier(kind: style.transition, progress: enterProgress))
                 .position(x: raster.frame.midX, y: size.height - raster.frame.midY)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
+        }
+    }
+}
+
+private struct CaptionTransitionModifier: ViewModifier {
+    var kind: CaptionStyle.TransitionKind
+    var progress: Double
+
+    func body(content: Content) -> some View {
+        switch kind {
+        case .cut:
+            content
+        case .fade:
+            content.opacity(progress)
+        case .slideUp:
+            content.opacity(progress).offset(y: (1 - progress) * 20)
+        case .pop:
+            content.opacity(progress).scaleEffect(0.7 + 0.3 * progress)
         }
     }
 }

@@ -3,6 +3,7 @@ import Foundation
 
 enum CameraLayout: String, CaseIterable, Identifiable {
     case overlay
+    case screenOnly = "screen-only"
     case cameraOnly = "camera-only"
     case split
     /// A stacked, full-width split intended for portrait canvases.
@@ -13,6 +14,7 @@ enum CameraLayout: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .overlay: "Overlay"
+        case .screenOnly: "Screen only"
         case .cameraOnly: "Camera only"
         case .split: "Split screen"
         case .verticalSplit: "Stacked split"
@@ -21,6 +23,7 @@ enum CameraLayout: String, CaseIterable, Identifiable {
     }
     var hasScreenPanel: Bool { self == .split || self == .verticalSplit || self == .sideBySide }
     var isVerticalSplit: Bool { self == .verticalSplit }
+    var hidesCamera: Bool { self == .screenOnly }
 }
 
 enum CameraScreenFit: String, CaseIterable, Identifiable {
@@ -60,6 +63,13 @@ struct CameraLayoutGeometry {
     }
 
     static func frames(in canvas: CGSize, screenAspectRatio: CGFloat, settings: FacecamSettings) -> Self {
+        if settings.resolvedLayout == .screenOnly,
+           canvas.width.isFinite, canvas.height.isFinite, canvas.width > 0, canvas.height > 0 {
+            let base = min(canvas.width, canvas.height)
+            let padding = base * settings.resolvedLayoutPadding / 100
+            let content = CGRect(origin: .zero, size: canvas).insetBy(dx: padding, dy: padding)
+            return Self(screen: content, camera: .zero)
+        }
         guard canvas.width.isFinite, canvas.height.isFinite, canvas.width > 0, canvas.height > 0,
               settings.enabled, settings.resolvedLayout != .overlay else {
             return Self(screen: .zero, camera: .zero)

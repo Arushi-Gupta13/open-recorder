@@ -141,6 +141,10 @@ struct VideoPreviewPanel: View {
                         }
                         .modifier(SceneCanvasGesture(enabled: showsSceneTools, tool: sceneTool,
                             pose: scenePoseBinding(settings: $scene, endpoint: sceneEndpoint), onEditingChanged: onSceneEditingChanged))
+                        .modifier(BlurRegionDrawingOverlay(sensitiveData: Binding(
+                            get: { scene.resolvedSensitiveData },
+                            set: { scene.sensitiveData = $0 }
+                        ), edits: timelineEdits, currentTime: playback.currentTime, duration: playback.duration))
                     } overlay: {
                         recordingSessionBadges
                     }

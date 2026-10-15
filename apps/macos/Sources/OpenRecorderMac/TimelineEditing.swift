@@ -289,7 +289,9 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
     var clipSpeeds: [Int: Double] = [:]
     var cameraClips: [TimelineCameraClip] = []
     var audio = AudioProcessingSettings.default
+    var aiEnhance = AIAudioEnhanceSettings.default
     var captions: CaptionTrack?
+    var blurRegions: [TimelineBlurRegion] = []
 
     static let empty = TimelineEditSnapshot()
 
@@ -318,6 +320,8 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
         case cameraClips
         case captions
         case audio
+        case aiEnhance
+        case blurRegions
     }
 
     init(from decoder: Decoder) throws {
@@ -329,11 +333,13 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
         clipSpeeds = try container.decodeIfPresent([Int: Double].self, forKey: .clipSpeeds) ?? [:]
         cameraClips = try container.decodeIfPresent([TimelineCameraClip].self, forKey: .cameraClips) ?? []
         audio = try container.decodeIfPresent(AudioProcessingSettings.self, forKey: .audio) ?? .default
+        aiEnhance = try container.decodeIfPresent(AIAudioEnhanceSettings.self, forKey: .aiEnhance) ?? .default
         captions = try container.decodeIfPresent(CaptionTrack.self, forKey: .captions)
+        blurRegions = try container.decodeIfPresent([TimelineBlurRegion].self, forKey: .blurRegions) ?? []
     }
 
     var hasEdits: Bool {
-        audio.isActive || captions != nil || !zoomRegions.isEmpty || !trimRegions.isEmpty || !annotationRegions.isEmpty || !clipSplitTimes.isEmpty || hasClipSpeedEdits || !cameraClips.isEmpty
+        audio.isActive || aiEnhance.enabled || captions != nil || !zoomRegions.isEmpty || !trimRegions.isEmpty || !annotationRegions.isEmpty || !clipSplitTimes.isEmpty || hasClipSpeedEdits || !cameraClips.isEmpty || !blurRegions.isEmpty
     }
 
     var hasClipSpeedEdits: Bool {
@@ -622,6 +628,7 @@ enum TimelineEditEvent: Equatable {
     case applySnapshot(TimelineEditSnapshot)
     case replaceCaptions(CaptionTrack?)
     case updateAudio(AudioProcessingSettings)
+    case updateAIEnhance(AIAudioEnhanceSettings)
     case reset
     case add(TimelineRegionKind, currentTime: Double, duration: Double)
     case regenerateAutoZoomsRequested(videoURL: URL?, duration: Double, preset: TimelineZoomAnimationPreset)
@@ -656,6 +663,9 @@ enum TimelineEditEvent: Equatable {
     case applyZoomTransition(TimelineZoomTransition, ids: [TimelineRegionID])
     case updateAnnotationText(id: TimelineRegionID, text: String)
     case removeClipSplit(splitTime: Double, duration: Double)
+    case addBlurRegion(TimelineBlurRegion)
+    case removeBlurRegion(id: TimelineRegionID)
+    case updateBlurRegions([TimelineBlurRegion])
 }
 
 enum TimelineEditEffect: Equatable {
@@ -677,6 +687,10 @@ extension TimelineEditState {
 
         case .updateAudio(let settings):
             snapshot.audio = settings
+            return []
+
+        case .updateAIEnhance(let settings):
+            snapshot.aiEnhance = settings
             return []
 
         case .reset:
@@ -829,6 +843,18 @@ extension TimelineEditState {
 
         case .removeClipSplit(let splitTime, let duration):
             removeClipSplit(at: splitTime, duration: duration)
+            return []
+
+        case .addBlurRegion(let region):
+            snapshot.blurRegions.append(region)
+            return []
+
+        case .removeBlurRegion(let id):
+            snapshot.blurRegions.removeAll { $0.id == id }
+            return []
+
+        case .updateBlurRegions(let regions):
+            snapshot.blurRegions = regions
             return []
         }
     }

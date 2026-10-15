@@ -129,10 +129,32 @@ struct CaptionInspector: View {
     private func styleControls(_ track: CaptionTrack) -> some View {
         InspectorGroup(title: "Style", symbolName: "textformat") {
             Toggle("Show captions", isOn: styleBinding(\.isVisible, fallback: true))
+            Menu("Style preset") {
+                ForEach(CaptionStylePreset.allCases) { preset in
+                    Button(preset.rawValue) {
+                        guard var t = self.track else { return }
+                        var applied = preset.style
+                        applied.isVisible = t.style.isVisible
+                        applied.position = t.style.position
+                        t.style = applied
+                        t.isEdited = true
+                        apply(t)
+                    }
+                }
+            }.menuStyle(.borderlessButton)
             HStack {
                 Text("Font size")
                 Slider(value: styleBinding(\.fontSize, fallback: 36), in: 20...64, step: 1)
                 Text("\(Int(track.style.fontSize))").monospacedDigit()
+            }
+            Picker("Font", selection: styleBinding(\.fontFamily, fallback: "Helvetica-Bold")) {
+                Text("Helvetica Bold").tag("Helvetica-Bold")
+                Text("Helvetica").tag("Helvetica")
+                Text("SF Pro Bold").tag("SFProDisplay-Bold")
+                Text("SF Pro").tag("SFProDisplay-Regular")
+                Text("Menlo").tag("Menlo-Bold")
+                Text("Georgia Bold").tag("Georgia-Bold")
+                Text("Avenir Heavy").tag("Avenir-Heavy")
             }
             ColorPicker("Text color", selection: colorBinding(\.textHex), supportsOpacity: false)
             ColorPicker("Background", selection: colorBinding(\.backgroundHex), supportsOpacity: false)
@@ -140,9 +162,27 @@ struct CaptionInspector: View {
                 Text("Opacity")
                 Slider(value: styleBinding(\.backgroundOpacity, fallback: 0.65), in: 0...1)
             }
+            HStack {
+                Text("Outline")
+                Slider(value: styleBinding(\.outlineWidth, fallback: 0), in: 0...8, step: 0.5)
+                Text(String(format: "%.1f", track.style.outlineWidth)).monospacedDigit()
+            }
+            if track.style.outlineWidth > 0 {
+                ColorPicker("Outline color", selection: colorBinding(\.outlineHex), supportsOpacity: false)
+            }
             Picker("Position", selection: styleBinding(\.position, fallback: .bottom)) {
                 Text("Top").tag(CaptionStyle.Position.top)
                 Text("Bottom").tag(CaptionStyle.Position.bottom)
+            }
+            Picker("Transition", selection: styleBinding(\.transition, fallback: .fade)) {
+                ForEach(CaptionStyle.TransitionKind.allCases) { Text($0.title).tag($0) }
+            }
+            if track.style.transition != .cut {
+                HStack {
+                    Text("Speed")
+                    Slider(value: styleBinding(\.transitionSpeed, fallback: 0.25), in: 0.05...1.0, step: 0.05)
+                    Text(String(format: "%.2fs", track.style.transitionSpeed)).monospacedDigit()
+                }
             }
         }.disabled(controller.isBusy)
     }
