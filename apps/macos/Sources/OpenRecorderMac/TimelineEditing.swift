@@ -40,6 +40,7 @@ enum TimelineZoomDepth {
 
 enum TimelineRegionKind: String, CaseIterable, Identifiable {
     case zoom
+    case blur
     case trim
     case annotation
 
@@ -48,6 +49,7 @@ enum TimelineRegionKind: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .zoom: "Zoom"
+        case .blur: "Blur"
         case .trim: "Trim"
         case .annotation: "Annotation"
         }
@@ -56,6 +58,7 @@ enum TimelineRegionKind: String, CaseIterable, Identifiable {
     var accent: Color {
         switch self {
         case .zoom: .blue
+        case .blur: .orange
         case .trim: .red
         case .annotation: .purple
         }
@@ -912,6 +915,10 @@ extension TimelineEditState {
             let region = TimelineZoomRegion(span: span, mode: .manual)
             snapshot.zoomRegions.append(region)
             select(.zoom, id: region.id)
+        case .blur:
+            statusMessage = "Draw on the preview to add a blur region."
+            select(nil, id: nil)
+            return
         case .trim:
             statusMessage = "Use clip splitting instead of trim sections."
             select(nil, id: nil)
@@ -1137,6 +1144,7 @@ extension TimelineEditState {
         guard let selectedKind, let selectedID else { return }
         switch selectedKind {
         case .zoom: snapshot.zoomRegions.removeAll { selectedZoomIDs.contains($0.id) || $0.id == selectedID }
+        case .blur: snapshot.blurRegions.removeAll { $0.id == selectedID }
         case .trim: snapshot.trimRegions.removeAll { $0.id == selectedID }
         case .annotation: snapshot.annotationRegions.removeAll { $0.id == selectedID }
         }
@@ -1270,6 +1278,8 @@ extension TimelineEditState {
                 $0.span = normalized
                 $0.isUserEdited = true
             }
+        case .blur:
+            mutate(&snapshot.blurRegions, id: id) { $0.span = normalized }
         case .trim:
             mutate(&snapshot.trimRegions, id: id) { $0.span = normalized }
         case .annotation:

@@ -248,6 +248,7 @@ struct TimelineTrackContent: View {
                 .rectangularHitTarget()
             TimelineClipRow(videoURL: videoURL, duration: playback.duration, currentTime: playback.currentTime, viewport: sourceViewport, splitTimes: edits.clipSplitTimes, trimRegions: edits.trimRegions, clipSpeeds: edits.clipSpeeds, selectedClipIndex: edits.selectedClipIndex, seek: playback.seek(to:), onScrubbingChanged: playback.setScrubbing, edits: edits)
             TimelineLayerRow(kind: .zoom, duration: playback.duration, viewport: sourceViewport, regions: edits.zoomRegions.map(TimelineRegionRenderData.zoom), selectedID: edits.selectedKind == .zoom ? edits.selectedID : nil, edits: edits)
+            TimelineLayerRow(kind: .blur, duration: playback.duration, viewport: sourceViewport, regions: edits.snapshot.blurRegions.map(TimelineRegionRenderData.blur), selectedID: edits.selectedKind == .blur ? edits.selectedID : nil, edits: edits)
             TimelineCameraLayerRow(
                 duration: playback.duration,
                 currentTime: playback.currentTime,
@@ -1418,6 +1419,15 @@ struct TimelineRegionRenderData: Identifiable {
             mode: zoom.mode
         )
     }
+
+    static func blur(_ blur: TimelineBlurRegion) -> TimelineRegionRenderData {
+        TimelineRegionRenderData(
+            id: blur.id,
+            span: blur.span,
+            label: "Blur \(Int(blur.blurRadius))",
+            mode: nil
+        )
+    }
 }
 
 struct TimelineLayerRow: View {
@@ -1462,6 +1472,8 @@ struct TimelineLayerRow: View {
         switch kind {
         case .zoom:
             "Click or press Z to add zoom"
+        case .blur:
+            "Draw on the preview to add blur"
         case .annotation:
             "Annotations are currently unavailable"
         case .trim:
@@ -2003,7 +2015,7 @@ struct TimelineRegionItem: View {
     private func performPrimaryEdit() {
         switch kind {
         case .zoom: edits.deepenZoom(id: region.id)
-        case .trim, .annotation: break
+        case .blur, .trim, .annotation: break
         }
     }
 
@@ -2016,6 +2028,6 @@ struct TimelineRegionItem: View {
     }
 
     private var regionAccessibilityHint: String {
-        kind == .zoom ? "Command-click to toggle selection. Shift-click to select a range. Press Delete to remove selected zooms. Press twice to increase zoom depth." : "Selects this timeline region."
+        kind == .zoom ? "Command-click to toggle selection. Shift-click to select a range. Press Delete to remove selected zooms. Press twice to increase zoom depth." : "Selects this timeline region. Drag to move it or drag either handle to change its duration."
     }
 }
