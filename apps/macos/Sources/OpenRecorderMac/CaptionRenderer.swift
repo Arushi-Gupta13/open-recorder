@@ -78,14 +78,19 @@ struct CaptionPreviewOverlay: View, Equatable {
     var size: CGSize
     var currentTime: Double = 0
 
+    /// Core Text renders into a bitmap. Render at Retina density so SwiftUI does
+    /// not enlarge a 1× caption image on a high-density preview.
+    private let displayScale: CGFloat = 2
+
     var body: some View {
-        if let segment, let raster = CaptionRenderer.render(text: segment.text, style: style, canvas: size) {
+        let rasterCanvas = CGSize(width: size.width * displayScale, height: size.height * displayScale)
+        if let segment, let raster = CaptionRenderer.render(text: segment.text, style: style, canvas: rasterCanvas) {
             let enterProgress = style.transition == .cut ? 1.0 : min(1, max(0, (currentTime - segment.start) / max(0.001, style.transitionSpeed)))
-            Image(decorative: raster.image, scale: 1)
+            Image(decorative: raster.image, scale: displayScale)
                 .resizable()
-                .frame(width: raster.frame.width, height: raster.frame.height)
+                .frame(width: raster.frame.width / displayScale, height: raster.frame.height / displayScale)
                 .modifier(CaptionTransitionModifier(kind: style.transition, progress: enterProgress))
-                .position(x: raster.frame.midX, y: size.height - raster.frame.midY)
+                .position(x: raster.frame.midX / displayScale, y: size.height - raster.frame.midY / displayScale)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }

@@ -36,12 +36,25 @@ enum MagnifierLensRenderer {
 
         let scale = min(canvas.width, canvas.height) / 1080
         let r = cfg.radius * scale
-        let center = CGPoint(x: canvas.width * focusX, y: canvas.height * focusY)
+        // `source` is not always a full-canvas image: in split-screen and scene
+        // layouts it can be a positioned content rect. Map the cursor's normalized
+        // point into that actual extent instead of assuming an origin of (0, 0).
+        // The old canvas-space crop often sampled transparent pixels, which made
+        // the lens look like a soft dark blur rather than a magnification.
+        let sourceBounds = source.extent
+        let normalizedX = max(0, min(focusX, 1))
+        let normalizedY = max(0, min(focusY, 1))
+        let center = CGPoint(
+            x: sourceBounds.minX + sourceBounds.width * normalizedX,
+            y: sourceBounds.minY + sourceBounds.height * normalizedY
+        )
         let mag = CGFloat(cfg.magnification)
 
         let magnifiedRegion = CGRect(x: center.x - r / mag, y: center.y - r / mag,
                                      width: 2 * r / mag, height: 2 * r / mag)
-        let cropped = source.cropped(to: magnifiedRegion)
+        // Clamp before cropping so a lens near an edge stays fully populated and
+        // crisp, rather than mixing transparent pixels into the glass mask.
+        let cropped = source.clampedToExtent().cropped(to: magnifiedRegion)
         let scaleT = CGAffineTransform(translationX: -magnifiedRegion.midX, y: -magnifiedRegion.midY)
             .concatenating(CGAffineTransform(scaleX: mag, y: mag))
             .concatenating(CGAffineTransform(translationX: center.x, y: center.y))

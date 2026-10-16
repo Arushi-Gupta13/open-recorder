@@ -22,6 +22,11 @@ enum TimelineMetrics {
         + clipHeight
         + layerHeight
         + layerHeight
+        + layerHeight
+        // Zoom and timed sensitive-data blur each get their own timeline lane.
+        // Reserve that lane here so the toolbar never gets clipped by the
+        // preview when blur regions are present.
+        + layerHeight
 }
 
 struct TimelinePanel: View {
@@ -247,6 +252,7 @@ struct TimelineTrackContent: View {
             }, onScrubbingChanged: playback.setScrubbing)
                 .rectangularHitTarget()
             TimelineClipRow(videoURL: videoURL, duration: playback.duration, currentTime: playback.currentTime, viewport: sourceViewport, splitTimes: edits.clipSplitTimes, trimRegions: edits.trimRegions, clipSpeeds: edits.clipSpeeds, selectedClipIndex: edits.selectedClipIndex, seek: playback.seek(to:), onScrubbingChanged: playback.setScrubbing, edits: edits)
+            TimelineVoiceoverRow(voiceover: edits.snapshot.voiceover, duration: playback.duration, viewport: sourceViewport, seek: playback.seek(to:))
             TimelineLayerRow(kind: .zoom, duration: playback.duration, viewport: sourceViewport, regions: edits.zoomRegions.map(TimelineRegionRenderData.zoom), selectedID: edits.selectedKind == .zoom ? edits.selectedID : nil, edits: edits)
             TimelineLayerRow(kind: .blur, duration: playback.duration, viewport: sourceViewport, regions: edits.snapshot.blurRegions.map(TimelineRegionRenderData.blur), selectedID: edits.selectedKind == .blur ? edits.selectedID : nil, edits: edits)
             TimelineCameraLayerRow(
@@ -301,6 +307,49 @@ struct TimelineTrackContent: View {
                 hoverTime = nil
             }
         }
+    }
+}
+
+private struct TimelineVoiceoverRow: View {
+    var voiceover: TimelineVoiceover?
+    var duration: Double
+    var viewport: TimelineViewport
+    var seek: (Double) -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Color(red: 0.095, green: 0.095, blue: 0.11))
+                if let voiceover, duration > 0 {
+                    let start = min(max(voiceover.startTime, 0), duration)
+                    let span = TimelineSpan(start: start, end: duration)
+                    let leading = viewport.x(for: span.start, width: proxy.size.width, clamped: true) ?? 0
+                    let trailing = viewport.x(for: span.end, width: proxy.size.width, clamped: true) ?? leading
+                    HStack(spacing: 7) {
+                        Image(systemName: "waveform").font(.system(size: 12, weight: .semibold))
+                        Text("Voiceover")
+                        if !voiceover.voiceName.isEmpty { Text(voiceover.voiceName).foregroundStyle(.white.opacity(0.65)) }
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .lineLimit(1)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .frame(width: max(0, trailing - leading), height: 42, alignment: .leading)
+                    .background(Color.purple.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+                    .offset(x: leading)
+                    .padding(.vertical, 8)
+                    .onTapGesture { seek(start) }
+                } else {
+                    Text("Generate a voiceover from the Audio panel")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.secondary.opacity(0.64))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .clipped()
+        }
+        .frame(height: TimelineMetrics.layerHeight)
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.border).frame(height: 1) }
     }
 }
 

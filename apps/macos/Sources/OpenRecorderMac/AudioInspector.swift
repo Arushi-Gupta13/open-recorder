@@ -3,7 +3,6 @@ import SwiftUI
 struct AudioInspector: View {
     var edits: TimelineEditDriver
     var playback: VideoPlaybackDriver
-    @State private var enhanceController = AIAudioEnhanceController()
     private var settings: AudioProcessingSettings { edits.snapshot.audio }
     private var enhanceSettings: AIAudioEnhanceSettings { edits.snapshot.aiEnhance }
     private func binding<T>(_ key: WritableKeyPath<AudioProcessingSettings, T>) -> Binding<T> {
@@ -21,42 +20,21 @@ struct AudioInspector: View {
         })
     }
     var body: some View {
-        InspectorGroup(title: "AI Enhance", symbolName: "wand.and.stars", showsTopDivider: false) {
-            if !enhanceController.modelReady {
-                Button("Download AI audio model") { enhanceController.downloadModel() }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-                    .disabled(enhanceController.phase != .idle)
-                if enhanceController.phase == .downloading {
-                    ProgressView(value: enhanceController.progress).controlSize(.small)
-                }
-                if let error = enhanceController.error {
-                    Text(error).font(.caption).foregroundStyle(.red)
-                }
-                Text("Downloads a small model for noise reduction and voice enhancement. Not bundled with the app.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else {
-                Button(enhanceSettings.enabled ? "AI Enhance: On" : "Enhance Audio") {
-                    var next = enhanceSettings
-                    next.enabled.toggle()
-                    if next.enabled && next == .default { next = .podcastReady }
-                    edits.send(.updateAIEnhance(next))
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(enhanceSettings.enabled ? .green : .accentColor)
-                .frame(maxWidth: .infinity)
-                if enhanceSettings.enabled {
-                    enhanceControl("Intensity", key: \.intensity, range: 0...1)
-                    enhanceControl("Noise reduction", key: \.denoiseStrength, range: 0...1)
-                    enhanceControl("Compression", key: \.compressorAmount, range: 0...1)
-                    enhanceControl("De-esser", key: \.deeser, range: 0...1)
-                    Button("Reset to podcast preset") {
-                        edits.send(.updateAIEnhance(.podcastReady))
-                    }
-                }
-                Text("Podcast-ready voice enhancement with noise reduction.")
-                    .font(.caption).foregroundStyle(.secondary)
+        InspectorGroup(title: "Voice Enhance", symbolName: "waveform.badge.plus", showsTopDivider: false) {
+            Button(enhanceSettings.enabled ? "Voice Enhance: On" : "Enhance voice") {
+                var next = enhanceSettings
+                next.enabled.toggle()
+                if next.enabled && next == .default { next = .podcastReady }
+                edits.send(.updateAIEnhance(next))
             }
+            .buttonStyle(.borderedProminent)
+            .tint(enhanceSettings.enabled ? .green : .accentColor)
+            .frame(maxWidth: .infinity)
+            if enhanceSettings.enabled {
+                enhanceControl("Intensity", key: \.intensity, range: 0...1)
+            }
+            Text("Local processing: noise reduction between words, rumble removal, vocal presence, de-essing, compression, and peak protection. Replay after changing it to compare.")
+                .font(.caption).foregroundStyle(.secondary)
         }
         InspectorGroup(title: "Voice", symbolName: "waveform") {
             HStack {

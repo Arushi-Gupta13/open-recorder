@@ -293,6 +293,7 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
     var cameraClips: [TimelineCameraClip] = []
     var audio = AudioProcessingSettings.default
     var aiEnhance = AIAudioEnhanceSettings.default
+    var voiceover: TimelineVoiceover?
     var captions: CaptionTrack?
     var blurRegions: [TimelineBlurRegion] = []
 
@@ -324,6 +325,7 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
         case captions
         case audio
         case aiEnhance
+        case voiceover
         case blurRegions
     }
 
@@ -337,12 +339,13 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
         cameraClips = try container.decodeIfPresent([TimelineCameraClip].self, forKey: .cameraClips) ?? []
         audio = try container.decodeIfPresent(AudioProcessingSettings.self, forKey: .audio) ?? .default
         aiEnhance = try container.decodeIfPresent(AIAudioEnhanceSettings.self, forKey: .aiEnhance) ?? .default
+        voiceover = try container.decodeIfPresent(TimelineVoiceover.self, forKey: .voiceover)
         captions = try container.decodeIfPresent(CaptionTrack.self, forKey: .captions)
         blurRegions = try container.decodeIfPresent([TimelineBlurRegion].self, forKey: .blurRegions) ?? []
     }
 
     var hasEdits: Bool {
-        audio.isActive || aiEnhance.enabled || captions != nil || !zoomRegions.isEmpty || !trimRegions.isEmpty || !annotationRegions.isEmpty || !clipSplitTimes.isEmpty || hasClipSpeedEdits || !cameraClips.isEmpty || !blurRegions.isEmpty
+        audio.isActive || aiEnhance.enabled || voiceover != nil || captions != nil || !zoomRegions.isEmpty || !trimRegions.isEmpty || !annotationRegions.isEmpty || !clipSplitTimes.isEmpty || hasClipSpeedEdits || !cameraClips.isEmpty || !blurRegions.isEmpty
     }
 
     var hasClipSpeedEdits: Bool {
@@ -436,6 +439,14 @@ struct TimelineEditSnapshot: Codable, Equatable, Hashable {
         let settings = clip.settings.clamped
         return settings.enabled ? settings : nil
     }
+}
+
+/// A generated narration clip stored with the editable project state. It is mixed
+/// with the screen recording at export rather than exposed as a Finder download.
+struct TimelineVoiceover: Codable, Equatable, Hashable, Sendable {
+    var path: String
+    var startTime: Double = 0
+    var voiceName: String = ""
 }
 
 struct TimelineZoomEffect: Equatable {
@@ -632,6 +643,7 @@ enum TimelineEditEvent: Equatable {
     case replaceCaptions(CaptionTrack?)
     case updateAudio(AudioProcessingSettings)
     case updateAIEnhance(AIAudioEnhanceSettings)
+    case replaceVoiceover(TimelineVoiceover?)
     case reset
     case add(TimelineRegionKind, currentTime: Double, duration: Double)
     case regenerateAutoZoomsRequested(videoURL: URL?, duration: Double, preset: TimelineZoomAnimationPreset)
@@ -694,6 +706,10 @@ extension TimelineEditState {
 
         case .updateAIEnhance(let settings):
             snapshot.aiEnhance = settings
+            return []
+
+        case .replaceVoiceover(let voiceover):
+            snapshot.voiceover = voiceover
             return []
 
         case .reset:

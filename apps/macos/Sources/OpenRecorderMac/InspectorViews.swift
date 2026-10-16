@@ -186,6 +186,8 @@ struct SettingsInspector: View {
         switch activeTab {
         case .scene:
             SceneInspector(settings: $scene, endpoint: $sceneEndpoint, duration: sceneDuration, hasCamera: hasRecordedCamera, edits: sceneEdits, currentTime: sceneCurrentTime, seek: seekScene, onEditingChanged: onSceneEditingChanged)
+        case .lens:
+            MagnifierLensInspector(settings: $scene, onEditingChanged: onSceneEditingChanged)
         case .appearance:
             CanvasAspectPicker(selection: $canvasAspect).padding(.bottom, 12)
             BackgroundPickerView(selection: $background, showsTopDivider: false)
@@ -484,6 +486,7 @@ struct InspectorFooterButton: View {
 enum InspectorTab: String, CaseIterable, Identifiable {
     case appearance
     case scene
+    case lens
     case cursor
     case camera
     case captions
@@ -491,14 +494,15 @@ enum InspectorTab: String, CaseIterable, Identifiable {
     case settings
     case audio
 
-    static let availableCases: [InspectorTab] = [.appearance, .scene, .cursor, .camera, .audio, .captions, .transcript]
-    static let railCases: [InspectorTab] = [.appearance, .scene, .cursor, .camera, .audio, .captions, .transcript, .settings]
+    static let availableCases: [InspectorTab] = [.appearance, .scene, .lens, .cursor, .camera, .audio, .captions, .transcript]
+    static let railCases: [InspectorTab] = [.appearance, .scene, .lens, .cursor, .camera, .audio, .captions, .transcript, .settings]
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .scene: "Scene"
+        case .lens: "Lens"
         case .appearance: "Appearance"
         case .cursor: "Cursor"
         case .camera: "Camera"
@@ -512,6 +516,7 @@ enum InspectorTab: String, CaseIterable, Identifiable {
     var shortTitle: String {
         switch self {
         case .scene: "Scene"
+        case .lens: "Lens"
         case .appearance: "Frame"
         case .cursor: "Cursor"
         case .camera: "Camera"
@@ -525,6 +530,7 @@ enum InspectorTab: String, CaseIterable, Identifiable {
     var symbolName: String {
         switch self {
         case .scene: "rotate.3d"
+        case .lens: "magnifyingglass"
         case .appearance: "slider.horizontal.3"
         case .cursor: "cursorarrow"
         case .camera: "camera"
@@ -537,7 +543,7 @@ enum InspectorTab: String, CaseIterable, Identifiable {
 
     var isStubbed: Bool {
         switch self {
-        case .appearance, .scene, .cursor, .camera, .captions, .transcript, .audio: false
+        case .appearance, .scene, .lens, .cursor, .camera, .captions, .transcript, .audio: false
         case .settings: true
         }
     }
@@ -545,6 +551,7 @@ enum InspectorTab: String, CaseIterable, Identifiable {
     var helpText: String {
         switch self {
         case .scene: "Scene · 3D Tilt & Motion (Alpha)"
+        case .lens: "Liquid Glass Lens · Cursor magnification & optics blur"
         case .appearance: "Appearance & Frame"
         case .cursor: "Cursor Settings"
         case .camera: "Camera & Facecam"

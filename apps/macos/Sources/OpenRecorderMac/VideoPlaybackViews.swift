@@ -377,7 +377,12 @@ struct VideoPreviewPanel: View {
             }
             .overlay {
                 if let captions = timelineEdits.snapshot.captions {
-                    CaptionPreviewOverlay(segment: captions.active(at: playback.currentTime), style: captions.style, size: proxy.size)
+                    CaptionPreviewOverlay(
+                        segment: captions.active(at: playback.currentTime),
+                        style: captions.style,
+                        size: proxy.size,
+                        currentTime: playback.currentTime
+                    )
                         .equatable()
                 }
             }

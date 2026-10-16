@@ -106,30 +106,7 @@ struct SceneInspector: View {
                                  enabledTitle: "Highlight", enabledSymbol: "rectangle.inset.filled",
                                  disabledTitle: "Plain", disabledSymbol: "rectangle")
             }
-            InspectorGroup(title: "Magnifier Lens", symbolName: "magnifyingglass", onReset: {
-                settings.magnifierLens = nil
-            }) {
-                SceneBooleanTabs(title: "Enable magnifier", isOn: Binding(
-                    get: { settings.resolvedMagnifierLens.enabled },
-                    set: { var cfg = settings.resolvedMagnifierLens; cfg.enabled = $0; settings.magnifierLens = cfg }
-                ), enabledTitle: "Magnify", enabledSymbol: "magnifyingglass",
-                   disabledTitle: "No lens", disabledSymbol: "circle.slash")
-                if settings.resolvedMagnifierLens.enabled {
-                    magnifierSlider("Radius", keyPath: \.radius, range: 40...400, step: 5, suffix: "px")
-                    magnifierSlider("Magnification", keyPath: \.magnification, range: 1.2...5, step: 0.1, suffix: "×")
-                    magnifierSlider("Glass edge blur", keyPath: \.glassBlurEdge, range: 0...30, step: 1, suffix: "px")
-                    magnifierSlider("Glass highlight", keyPath: \.glassOpacity, range: 0...0.5, step: 0.01, suffix: "")
-                    magnifierSlider("Border", keyPath: \.borderWidth, range: 0...10, step: 0.5, suffix: "px")
-                    magnifierSlider("Motion blur", keyPath: \.motionBlurAmount, range: 0...30, step: 1, suffix: "")
-                    SceneBooleanTabs(title: "Follow cursor", isOn: Binding(
-                        get: { settings.resolvedMagnifierLens.followsCursor },
-                        set: { var cfg = settings.resolvedMagnifierLens; cfg.followsCursor = $0; settings.magnifierLens = cfg }
-                    ), enabledTitle: "Follow", enabledSymbol: "cursorarrow.motionlines",
-                       disabledTitle: "Fixed", disabledSymbol: "pin.fill")
-                    Text("A magnifying glass follows your cursor with liquid glass refraction.")
-                        .font(.system(size: 10)).foregroundStyle(Theme.fgMuted)
-                }
-            }
+            MagnifierLensInspector(settings: $settings, onEditingChanged: onEditingChanged)
             InspectorGroup(title: "Privacy", symbolName: "eye.slash", onReset: {
                 settings.sensitiveData = nil
                 edits?.send(.updateBlurRegions([]))
@@ -206,6 +183,57 @@ struct SceneInspector: View {
         .foregroundStyle(Theme.fg)
     }
 
+}
+
+/// A dedicated Lens page keeps the effect discoverable instead of burying it
+/// beneath Scene transform and mockup controls.
+struct MagnifierLensInspector: View {
+    @Binding var settings: SceneSettings
+    var onEditingChanged: (Bool) -> Void = { _ in }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 7) {
+                Text("Lens").font(.headline)
+                Text("Beta")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(Theme.fgMuted)
+                    .padding(.horizontal, 6).padding(.vertical, 3)
+                    .background(Theme.overlay, in: Capsule())
+                Spacer()
+                Button("Reset Lens") { settings.magnifierLens = nil }
+                    .font(.system(size: 10)).buttonStyle(.plain)
+            }
+            .padding(.bottom, 8)
+            Text("A circular liquid-glass lens magnifies the content at your cursor. Motion blur responds to cursor velocity in preview and export.")
+                .font(.system(size: 11)).foregroundStyle(Theme.fgMuted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            InspectorGroup(title: "Liquid Glass Lens", symbolName: "magnifyingglass", showsTopDivider: false) {
+                SceneBooleanTabs(title: "Lens mode", isOn: Binding(
+                    get: { settings.resolvedMagnifierLens.enabled },
+                    set: { var cfg = settings.resolvedMagnifierLens; cfg.enabled = $0; settings.magnifierLens = cfg }
+                ), enabledTitle: "Cursor lens", enabledSymbol: "magnifyingglass",
+                   disabledTitle: "Off", disabledSymbol: "circle.slash")
+                if settings.resolvedMagnifierLens.enabled {
+                    magnifierSlider("Radius", keyPath: \.radius, range: 40...400, step: 5, suffix: "px")
+                    magnifierSlider("Magnification", keyPath: \.magnification, range: 1.2...5, step: 0.1, suffix: "×")
+                    magnifierSlider("Glass edge blur", keyPath: \.glassBlurEdge, range: 0...30, step: 1, suffix: "px")
+                    magnifierSlider("Glass highlight", keyPath: \.glassOpacity, range: 0...0.5, step: 0.01, suffix: "")
+                    magnifierSlider("Border", keyPath: \.borderWidth, range: 0...10, step: 0.5, suffix: "px")
+                    magnifierSlider("Optics motion blur", keyPath: \.motionBlurAmount, range: 0...30, step: 1, suffix: "")
+                    SceneBooleanTabs(title: "Tracking", isOn: Binding(
+                        get: { settings.resolvedMagnifierLens.followsCursor },
+                        set: { var cfg = settings.resolvedMagnifierLens; cfg.followsCursor = $0; settings.magnifierLens = cfg }
+                    ), enabledTitle: "Follow cursor", enabledSymbol: "cursorarrow.motionlines",
+                       disabledTitle: "Fixed", disabledSymbol: "pin.fill")
+                }
+            }
+        }
+        .controlSize(.small)
+        .foregroundStyle(Theme.fg)
+    }
+
     private func magnifierSlider(_ title: String, keyPath: WritableKeyPath<MagnifierLensConfig, Double>, range: ClosedRange<Double>, step: Double, suffix: String) -> some View {
         let value = settings.resolvedMagnifierLens[keyPath: keyPath]
         return InspectorSlider(title: title, valueText: String(format: step >= 1 ? "%.0f%@" : "%.2f%@", value, suffix),
@@ -213,6 +241,9 @@ struct SceneInspector: View {
                 var cfg = settings.resolvedMagnifierLens; cfg[keyPath: keyPath] = $0; settings.magnifierLens = cfg
             }), range: range, step: step, onEditingChanged: onEditingChanged)
     }
+}
+
+extension SceneInspector {
 
     private func blurRegionEditor(_ blur: TimelineBlurRegion, index: Int, edits: TimelineEditDriver) -> some View {
         VStack(alignment: .leading, spacing: 7) {

@@ -101,7 +101,6 @@ extension URLSession {
 
 final class AIAudioDSP {
     let settings: AIAudioEnhanceSettings
-    private var noiseEstimate: [Double]
     private var highPassL: AudioBiquad
     private var highPassR: AudioBiquad
     private var presenceL: AudioBiquad
@@ -109,24 +108,26 @@ final class AIAudioDSP {
     private var deeserL: AudioBiquad
     private var deeserR: AudioBiquad
     private var compEnvelope = 0.0
+    private var gateGain = 1.0
     private let attack: Double
     private let release: Double
+    private let gateRelease: Double
     private let makeupGain: Double
 
     init(settings: AIAudioEnhanceSettings, sampleRate: Double) {
         self.settings = settings.clamped
-        noiseEstimate = Array(repeating: 0, count: 256)
         let intensity = settings.intensity
 
-        highPassL = .filter(frequency: 60 + 40 * intensity, sampleRate: sampleRate, highPass: true)
-        highPassR = .filter(frequency: 60 + 40 * intensity, sampleRate: sampleRate, highPass: true)
-        presenceL = .filter(frequency: 3200, sampleRate: sampleRate, gain: 2.5 * intensity)
-        presenceR = .filter(frequency: 3200, sampleRate: sampleRate, gain: 2.5 * intensity)
-        deeserL = .filter(frequency: 6500, sampleRate: sampleRate, gain: -3 * settings.deeser)
-        deeserR = .filter(frequency: 6500, sampleRate: sampleRate, gain: -3 * settings.deeser)
+        highPassL = .filter(frequency: 75 + 65 * intensity, sampleRate: sampleRate, highPass: true)
+        highPassR = .filter(frequency: 75 + 65 * intensity, sampleRate: sampleRate, highPass: true)
+        presenceL = .filter(frequency: 3200, sampleRate: sampleRate, gain: 4.5 * intensity)
+        presenceR = .filter(frequency: 3200, sampleRate: sampleRate, gain: 4.5 * intensity)
+        deeserL = .filter(frequency: 6500, sampleRate: sampleRate, gain: -6 * settings.deeser)
+        deeserR = .filter(frequency: 6500, sampleRate: sampleRate, gain: -6 * settings.deeser)
         attack = exp(-1 / (0.003 * sampleRate))
         release = exp(-1 / (0.15 * sampleRate))
-        makeupGain = pow(10, (2 * intensity) / 20)
+        gateRelease = exp(-1 / (0.075 * sampleRate))
+        makeupGain = pow(10, (3.5 * intensity) / 20)
     }
 
     func process(_ left: Float, _ right: Float) -> (Float, Float) {
@@ -143,11 +144,24 @@ final class AIAudioDSP {
         r = deeserR.process(r)
 
         let peak = max(abs(l), abs(r))
+        // A gentle downward expander removes room/computer noise between words.
+        // It deliberately never closes fully, preventing clipped speech tails.
+        let gateThreshold = pow(10, (-52 + 22 * settings.denoiseStrength) / 20)
+        let targetGate = peak < gateThreshold
+            ? max(0.12, peak / max(gateThreshold, 1e-9))
+            : 1.0
+        let gateCoefficient = targetGate < gateGain ? attack : gateRelease
+        gateGain = gateCoefficient * gateGain + (1 - gateCoefficient) * targetGate
+        let denoiseMix = settings.denoiseStrength * settings.intensity
+        let noiseReduction = 1 - denoiseMix * (1 - gateGain)
+        l *= noiseReduction
+        r *= noiseReduction
+
         let coeff = peak > compEnvelope ? attack : release
         compEnvelope = coeff * compEnvelope + (1 - coeff) * peak
 
-        let threshold = 0.15 * (1 - settings.compressorAmount * 0.5)
-        let ratio = 1 + 3 * settings.compressorAmount
+        let threshold = 0.12 * (1 - settings.compressorAmount * 0.45)
+        let ratio = 1 + 5 * settings.compressorAmount
         let aboveDB = max(0, 20 * log10(max(compEnvelope, 1e-12)) - 20 * log10(max(threshold, 1e-12)))
         let reduction = aboveDB * (1 - 1 / ratio)
         let compression = pow(10, -reduction / 20) * makeupGain
