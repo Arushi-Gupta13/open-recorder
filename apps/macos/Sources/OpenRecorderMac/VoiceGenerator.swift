@@ -301,7 +301,7 @@ final class VoiceGeneratorController {
 
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                    throw VoiceGenError.serverError
+                    throw VoiceGenError.serverError(message: Self.serverMessage(from: data, response: response))
                 }
 
                 try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
@@ -350,7 +350,9 @@ final class VoiceGeneratorController {
                     "reference_text": referenceTranscript, "response_format": "wav"
                 ])
                 let (data, response) = try await URLSession.shared.data(for: request)
-                guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw VoiceGenError.serverError }
+                guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                    throw VoiceGenError.serverError(message: Self.serverMessage(from: data, response: response))
+                }
                 try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
                 let outputPath = outputDir.appendingPathComponent("generated-custom-voice-\(UUID().uuidString.prefix(8)).wav")
                 try data.write(to: outputPath)
@@ -370,15 +372,25 @@ final class VoiceGeneratorController {
         generatedAudioPath = url.path
     }
 
+    private static func serverMessage(from data: Data, response: URLResponse) -> String {
+        struct ErrorResponse: Decodable { let detail: String? }
+        let detail = try? JSONDecoder().decode(ErrorResponse.self, from: data).detail
+        let status = (response as? HTTPURLResponse)?.statusCode
+        let message = detail?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let message, !message.isEmpty { return "TTS server error: \(message)" }
+        if let status { return "TTS server returned HTTP \(status)." }
+        return "TTS server returned an invalid response."
+    }
+
     enum VoiceGenError: LocalizedError {
-        case serverError
+        case serverError(message: String)
         case noText
         case invalidReference
         case referenceRecordingFailed
         case voiceoverRecordingFailed
         var errorDescription: String? {
             switch self {
-            case .serverError: "TTS server returned an error."
+            case .serverError(let message): message
             case .noText: "No text to generate voice from."
             case .invalidReference: "Choose a readable voice reference recording."
             case .referenceRecordingFailed: "Could not start the reference recording."

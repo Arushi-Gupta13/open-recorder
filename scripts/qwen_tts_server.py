@@ -6,6 +6,7 @@ from __future__ import annotations
 import io
 import os
 import base64
+import gc
 from contextlib import asynccontextmanager
 
 # launchd starts with a minimal PATH; make Homebrew's SoX visible before Qwen imports.
@@ -34,29 +35,54 @@ class SpeechRequest(BaseModel):
     reference_text: str | None = None
 
 
-def load_model() -> Qwen3TTSModel:
+def load_model(model_id: str) -> Qwen3TTSModel:
     # MPS float16 can produce NaNs and MPS bfloat16 can produce corrupted audio
     # in Qwen's autoregressive decoder. Use full-precision CPU inference until
     # the upstream MPS path is reliable; it is slower but produces valid speech.
     device = "cpu"
     dtype = torch.float32
-    return Qwen3TTSModel.from_pretrained(MODEL_ID, device_map=device, dtype=dtype)
+    return Qwen3TTSModel.from_pretrained(model_id, device_map=device, dtype=dtype)
+
+
+def unload_model(app: FastAPI, attribute: str) -> None:
+    """Keep one Qwen checkpoint resident on a local Mac at a time.
+
+    Loading CustomVoice and Base together can exhaust unified memory before the
+    clone request begins. Switching is slower than keeping both warm, but is
+    reliable on ordinary developer machines.
+    """
+    model = getattr(app.state, attribute, None)
+    if model is not None:
+        delattr(app.state, attribute)
+        del model
+        gc.collect()
+
+
+def custom_model(app: FastAPI) -> Qwen3TTSModel:
+    model = getattr(app.state, "custom_model", None)
+    if model is None:
+        unload_model(app, "clone_model")
+        model = load_model(MODEL_ID)
+        app.state.custom_model = model
+    return model
 
 
 def clone_model(app: FastAPI) -> Qwen3TTSModel:
     model = getattr(app.state, "clone_model", None)
     if model is None:
-        # Downloaded only when the user actually selects Custom voice.
-        model = Qwen3TTSModel.from_pretrained(CLONE_MODEL_ID, device_map="cpu", dtype=torch.float32)
+        # A clone uses the Base checkpoint, not the CustomVoice checkpoint.
+        # Release the normal TTS model first so both models are never resident.
+        unload_model(app, "custom_model")
+        model = load_model(CLONE_MODEL_ID)
         app.state.clone_model = model
     return model
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.model = load_model()
     yield
-    del app.state.model
+    unload_model(app, "custom_model")
+    unload_model(app, "clone_model")
 
 
 app = FastAPI(title="Open Recorder local Qwen3-TTS", lifespan=lifespan)
@@ -75,7 +101,7 @@ def speech(request: SpeechRequest) -> Response:
         raise HTTPException(status_code=404, detail=f"Model {request.model!r} is not loaded.")
     try:
         if request.reference_audio_b64:
-            reference = base64.b64decode(request.reference_audio_b64)
+            reference = base64.b64decode(request.reference_audio_b64, validate=True)
             samples, sample_rate = sf.read(io.BytesIO(reference), always_2d=False)
             if getattr(samples, "ndim", 1) > 1:
                 # A reference must describe one speaker, not a stereo soundstage.
@@ -100,9 +126,12 @@ def speech(request: SpeechRequest) -> Response:
                 ref_audio=(samples, sample_rate),
                 ref_text=request.reference_text or None,
                 x_vector_only_mode=not bool(request.reference_text and request.reference_text.strip()),
+                # Avoid the streaming path's speaking-rate drift. We return a
+                # completed WAV response, so streaming provides no UI benefit.
+                non_streaming_mode=True,
             )
         else:
-            wavs, sample_rate = app.state.model.generate_custom_voice(
+            wavs, sample_rate = custom_model(app).generate_custom_voice(
                 text=request.input,
                 language=request.language,
                 speaker=request.voice,
