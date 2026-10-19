@@ -24,7 +24,7 @@ struct VoiceGeneratorInspector: View {
 
     var body: some View {
         InspectorGroup(title: "Voiceover", symbolName: "waveform.and.mic", showsTopDivider: false) {
-            Text("Write a script, then record your narration while the video plays. The recording begins at the current playhead.")
+            Text("Write a script, then record your narration against the video. Recording and playback begin together at the current playhead.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -36,11 +36,14 @@ struct VoiceGeneratorInspector: View {
                 .accessibilityLabel("Voiceover script")
 
             HStack {
-                Button(controller.isRecordingVoiceover ? "Stop voiceover" : "Record voiceover") {
+                Button(controller.isRecordingVoiceover ? "Stop recording" : "Record & play") {
                     if controller.isRecordingVoiceover {
                         controller.stopVoiceoverRecording()
+                        playback.pause()
                     } else {
-                        controller.startVoiceoverRecording(outputDir: voiceoverDirectory)
+                        controller.startVoiceoverRecording(outputDir: voiceoverDirectory) {
+                            if !playback.isPlaying { playback.togglePlayback() }
+                        }
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -49,6 +52,8 @@ struct VoiceGeneratorInspector: View {
                     .monospacedDigit().font(.caption).foregroundStyle(.secondary)
                 Spacer()
             }
+            Text("You can stop and retake at any time. A new take replaces the previous voiceover on this project.")
+                .font(.caption).foregroundStyle(.secondary)
 
             Divider()
             Text("Generate with AI · optional").font(.subheadline.weight(.semibold))

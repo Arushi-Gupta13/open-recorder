@@ -89,7 +89,7 @@ final class VoiceGeneratorController {
 
     /// Records the narrator after capture. This deliberately does not depend on
     /// the local TTS service: the typed script is a reading aid for a human take.
-    func startVoiceoverRecording(outputDir: URL) {
+    func startVoiceoverRecording(outputDir: URL, onStarted: @escaping @MainActor () -> Void = {}) {
         guard !isRecordingVoiceover else { return }
         Task {
             let granted = await AVCaptureDevice.requestAccess(for: .audio)
@@ -114,6 +114,7 @@ final class VoiceGeneratorController {
                 voiceoverRecordingSeconds = 0
                 isRecordingVoiceover = true
                 error = nil
+                onStarted()
                 voiceoverTimer?.invalidate()
                 voiceoverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
                     Task { @MainActor in

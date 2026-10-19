@@ -74,7 +74,7 @@ final class CaptionTests: XCTestCase {
     }
 
     func testBuiltInCaptionPresetsProduceValidDistinctStyles() {
-        XCTAssertGreaterThanOrEqual(CaptionStylePreset.allCases.count, 10)
+        XCTAssertGreaterThanOrEqual(CaptionStylePreset.allCases.count, 15)
         let styles = CaptionStylePreset.allCases.map(\.style)
         XCTAssertEqual(Set(styles).count, styles.count)
         for style in styles {
@@ -86,6 +86,8 @@ final class CaptionTests: XCTestCase {
         XCTAssertEqual(CaptionStylePreset.social.style.backgroundOpacity, 0)
         XCTAssertGreaterThan(CaptionStylePreset.social.style.outlineWidth, 0)
         XCTAssertEqual(CaptionStylePreset.creator.style.textHex, "#FFE600")
+        XCTAssertGreaterThan(CaptionStylePreset.shorts.style.outlineWidth, 0)
+        XCTAssertEqual(CaptionStylePreset.tutorial.style.backgroundHex, "#D9F99D")
     }
 
     func testVoiceoverDurationRoundTripsAndOldProjectsRemainReadable() throws {

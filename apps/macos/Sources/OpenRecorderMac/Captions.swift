@@ -53,6 +53,11 @@ enum CaptionStylePreset: String, CaseIterable, Identifiable {
     case cinema = "Cinema"
     case news = "News"
     case retro = "Retro"
+    case shorts = "Shorts"
+    case podcast = "Podcast"
+    case tutorial = "Tutorial"
+    case gaming = "Gaming"
+    case documentary = "Documentary"
 
     var id: String { rawValue }
 
@@ -80,6 +85,16 @@ enum CaptionStylePreset: String, CaseIterable, Identifiable {
             CaptionStyle(fontSize: 34, fontFamily: "Helvetica-Bold", textHex: "#FFFFFF", backgroundHex: "#C8102E", backgroundOpacity: 0.94, transition: .slideUp, transitionSpeed: 0.20, letterSpacing: 0.3)
         case .retro:
             CaptionStyle(fontSize: 38, fontFamily: "Menlo-Bold", textHex: "#FFF4C2", backgroundHex: "#3A245B", backgroundOpacity: 0.88, transition: .cut, outlineWidth: 1, outlineHex: "#170D28", letterSpacing: 1)
+        case .shorts:
+            CaptionStyle(fontSize: 52, fontFamily: "Helvetica-Bold", textHex: "#FFFFFF", backgroundOpacity: 0, transition: .pop, transitionSpeed: 0.1, outlineWidth: 5, outlineHex: "#111111", letterSpacing: 0.8)
+        case .podcast:
+            CaptionStyle(fontSize: 34, fontFamily: "Avenir-Heavy", textHex: "#FFFFFF", backgroundHex: "#161616", backgroundOpacity: 0.9, transition: .fade, transitionSpeed: 0.2, letterSpacing: 0.25)
+        case .tutorial:
+            CaptionStyle(fontSize: 38, fontFamily: "SFProDisplay-Bold", textHex: "#102A43", backgroundHex: "#D9F99D", backgroundOpacity: 0.96, transition: .slideUp, transitionSpeed: 0.18, outlineWidth: 0.5, outlineHex: "#FFFFFF")
+        case .gaming:
+            CaptionStyle(fontSize: 48, fontFamily: "Helvetica-Bold", textHex: "#FF4FD8", backgroundHex: "#12051D", backgroundOpacity: 0.76, transition: .pop, transitionSpeed: 0.12, outlineWidth: 3, outlineHex: "#FFFFFF", letterSpacing: 1.2)
+        case .documentary:
+            CaptionStyle(fontSize: 28, fontFamily: "Georgia-Bold", textHex: "#F5E6C8", backgroundHex: "#101010", backgroundOpacity: 0.72, transition: .fade, transitionSpeed: 0.32, letterSpacing: 0.55)
         }
     }
 }
