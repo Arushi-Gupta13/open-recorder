@@ -45,6 +45,14 @@ enum CaptionStylePreset: String, CaseIterable, Identifiable {
     case bold = "Bold"
     case outline = "Outline"
     case neon = "Neon"
+    // Familiar, ready-to-use treatments found in social and video editors.
+    // They deliberately use the existing renderer features so every preset is
+    // equally reliable in the preview and exported movie.
+    case social = "Social"
+    case creator = "Creator"
+    case cinema = "Cinema"
+    case news = "News"
+    case retro = "Retro"
 
     var id: String { rawValue }
 
@@ -60,6 +68,18 @@ enum CaptionStylePreset: String, CaseIterable, Identifiable {
             CaptionStyle(fontSize: 42, fontFamily: "Helvetica-Bold", backgroundOpacity: 0, outlineWidth: 3, outlineHex: "#000000")
         case .neon:
             CaptionStyle(fontSize: 40, fontFamily: "Helvetica-Bold", textHex: "#00FF88", backgroundHex: "#000000", backgroundOpacity: 0.75, transition: .slideUp, transitionSpeed: 0.18, letterSpacing: 2)
+        case .social:
+            // The high-contrast outlined treatment common in short-form video.
+            CaptionStyle(fontSize: 46, fontFamily: "Helvetica-Bold", backgroundOpacity: 0, transition: .pop, transitionSpeed: 0.12, outlineWidth: 4, outlineHex: "#000000", letterSpacing: 0.5)
+        case .creator:
+            // A bright emphasis style that stays legible over screen captures.
+            CaptionStyle(fontSize: 46, fontFamily: "Helvetica-Bold", textHex: "#FFE600", backgroundHex: "#000000", backgroundOpacity: 0.82, transition: .pop, transitionSpeed: 0.14, outlineWidth: 1.5, outlineHex: "#000000")
+        case .cinema:
+            CaptionStyle(fontSize: 30, fontFamily: "Helvetica", textHex: "#F7F1E3", backgroundHex: "#000000", backgroundOpacity: 0.78, transition: .fade, transitionSpeed: 0.28, letterSpacing: 0.4)
+        case .news:
+            CaptionStyle(fontSize: 34, fontFamily: "Helvetica-Bold", textHex: "#FFFFFF", backgroundHex: "#C8102E", backgroundOpacity: 0.94, transition: .slideUp, transitionSpeed: 0.20, letterSpacing: 0.3)
+        case .retro:
+            CaptionStyle(fontSize: 38, fontFamily: "Menlo-Bold", textHex: "#FFF4C2", backgroundHex: "#3A245B", backgroundOpacity: 0.88, transition: .cut, outlineWidth: 1, outlineHex: "#170D28", letterSpacing: 1)
         }
     }
 }

@@ -61,9 +61,13 @@ final class VoiceGeneratorController {
     private(set) var serverReady = false
     private(set) var error: String?
     private(set) var generatedAudioPath: String?
+    private(set) var generatedAudioDuration = 0.0
+    private(set) var generatedAudioName = ""
     private(set) var referenceAudioPath: String?
     private(set) var isRecordingReference = false
     private(set) var referenceRecordingSeconds = 0.0
+    private(set) var isRecordingVoiceover = false
+    private(set) var voiceoverRecordingSeconds = 0.0
     private(set) var isTranscribingReference = false
     private(set) var referenceTranscriptProgress: Double?
     var referenceTranscript = ""
@@ -72,12 +76,66 @@ final class VoiceGeneratorController {
     @ObservationIgnored private var referenceRecorder: AVAudioRecorder?
     @ObservationIgnored private var referenceTimer: Timer?
     @ObservationIgnored private var referenceStartedAt: Date?
+    @ObservationIgnored private var referenceRequestID = UUID()
+    @ObservationIgnored private var voiceoverRecorder: AVAudioRecorder?
+    @ObservationIgnored private var voiceoverTimer: Timer?
+    @ObservationIgnored private var voiceoverStartedAt: Date?
 
     private static let logger = Logger(subsystem: "dev.openrecorder.app", category: "VoiceGenerator")
     private static let ttsServerURL = URL(string: "http://localhost:8880")!
 
     var isBusy: Bool { phase != .idle }
     var canGenerate: Bool { !isBusy && serverReady }
+
+    /// Records the narrator after capture. This deliberately does not depend on
+    /// the local TTS service: the typed script is a reading aid for a human take.
+    func startVoiceoverRecording(outputDir: URL) {
+        guard !isRecordingVoiceover else { return }
+        Task {
+            let granted = await AVCaptureDevice.requestAccess(for: .audio)
+            guard granted else {
+                error = "Microphone access is required to record a voiceover."
+                return
+            }
+            do {
+                try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
+                let url = outputDir.appendingPathComponent("recorded-voiceover-\(UUID().uuidString.prefix(8)).wav")
+                let recorder = try AVAudioRecorder(url: url, settings: [
+                    AVFormatIDKey: kAudioFormatLinearPCM,
+                    AVSampleRateKey: 48_000,
+                    AVNumberOfChannelsKey: 1,
+                    AVLinearPCMBitDepthKey: 16,
+                    AVLinearPCMIsFloatKey: false
+                ])
+                recorder.prepareToRecord()
+                guard recorder.record() else { throw VoiceGenError.voiceoverRecordingFailed }
+                voiceoverRecorder = recorder
+                voiceoverStartedAt = Date()
+                voiceoverRecordingSeconds = 0
+                isRecordingVoiceover = true
+                error = nil
+                voiceoverTimer?.invalidate()
+                voiceoverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                    Task { @MainActor in
+                        guard let self, let start = self.voiceoverStartedAt else { return }
+                        self.voiceoverRecordingSeconds = Date().timeIntervalSince(start)
+                    }
+                }
+            } catch {
+                self.error = "Could not start the voiceover recording: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func stopVoiceoverRecording() {
+        guard let recorder = voiceoverRecorder else { return }
+        recorder.stop()
+        voiceoverRecorder = nil
+        voiceoverTimer?.invalidate(); voiceoverTimer = nil
+        voiceoverStartedAt = nil
+        isRecordingVoiceover = false
+        Task { await publishGeneratedAudio(at: recorder.url, name: "Recorded voiceover") }
+    }
 
     func startReferenceRecording() {
         guard !isRecordingReference else { return }
@@ -123,15 +181,41 @@ final class VoiceGeneratorController {
     func stopReferenceRecording() {
         guard let recorder = referenceRecorder else { return }
         recorder.stop()
-        referenceAudioPath = recorder.url.path
         referenceRecorder = nil
         referenceTimer?.invalidate(); referenceTimer = nil
         referenceStartedAt = nil
         isRecordingReference = false
-        transcribeReference(url: recorder.url)
+        selectReferenceAudio(recorder.url)
     }
 
-    private func transcribeReference(url: URL) {
+    func selectReferenceAudio(_ url: URL) {
+        let requestID = UUID()
+        referenceRequestID = requestID
+        referenceTranscript = ""
+        error = nil
+        Task {
+            let asset = AVURLAsset(url: url)
+            let duration = (try? await asset.load(.duration)).map { CMTimeGetSeconds($0) } ?? 0
+            guard referenceRequestID == requestID else { return }
+            guard duration.isFinite, duration >= 3, duration <= 30.5 else {
+                error = "Use 3–30 seconds of clear, single-speaker audio for a custom voice reference."
+                referenceAudioPath = nil
+                return
+            }
+            referenceAudioPath = url.path
+            transcribeReference(url: url, requestID: requestID)
+        }
+    }
+
+    func clearReferenceAudio() {
+        referenceRequestID = UUID()
+        referenceAudioPath = nil
+        referenceTranscript = ""
+        referenceTranscriptProgress = nil
+        isTranscribingReference = false
+    }
+
+    private func transcribeReference(url: URL, requestID: UUID) {
         isTranscribingReference = true
         referenceTranscriptProgress = 0
         error = nil
@@ -141,15 +225,21 @@ final class VoiceGeneratorController {
                     throw CaptionFailure.message("The local speech model is unavailable. Download it from Captions first.")
                 }
                 let segments = try await LocalCaptionSpeechService().transcribe(audio: url, language: "en") { [weak self] progress in
-                    Task { @MainActor in self?.referenceTranscriptProgress = progress }
+                    Task { @MainActor in
+                        guard self?.referenceRequestID == requestID else { return }
+                        self?.referenceTranscriptProgress = progress
+                    }
                 }
+                guard referenceRequestID == requestID else { return }
                 referenceTranscript = segments.sorted { $0.start < $1.start }.map(\.text).joined(separator: " ")
                 guard !referenceTranscript.isEmpty else {
                     throw CaptionFailure.message("No speech was detected in the reference recording.")
                 }
             } catch {
+                guard referenceRequestID == requestID else { return }
                 self.error = "Reference transcription failed: \(error.localizedDescription)"
             }
+            guard referenceRequestID == requestID else { return }
             isTranscribingReference = false
             referenceTranscriptProgress = nil
         }
@@ -217,7 +307,7 @@ final class VoiceGeneratorController {
                 let outputPath = outputDir.appendingPathComponent("generated-voice-\(UUID().uuidString.prefix(8)).wav")
                 try data.write(to: outputPath)
 
-                generatedAudioPath = outputPath.path
+                await publishGeneratedAudio(at: outputPath, name: cfg.voice.title)
                 Self.logger.info("Voice generated: \(outputPath.lastPathComponent)")
                 progress = 1
                 phase = .idle
@@ -263,7 +353,7 @@ final class VoiceGeneratorController {
                 try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
                 let outputPath = outputDir.appendingPathComponent("generated-custom-voice-\(UUID().uuidString.prefix(8)).wav")
                 try data.write(to: outputPath)
-                generatedAudioPath = outputPath.path
+                await publishGeneratedAudio(at: outputPath, name: "Custom voice")
                 progress = 1; phase = .idle
             } catch {
                 self.error = error.localizedDescription; self.phase = .idle; self.progress = nil
@@ -271,17 +361,27 @@ final class VoiceGeneratorController {
         }
     }
 
+    private func publishGeneratedAudio(at url: URL, name: String) async {
+        let asset = AVURLAsset(url: url)
+        let duration = (try? await asset.load(.duration)).map { CMTimeGetSeconds($0) } ?? 0
+        generatedAudioDuration = duration.isFinite && duration > 0 ? duration : 0
+        generatedAudioName = name
+        generatedAudioPath = url.path
+    }
+
     enum VoiceGenError: LocalizedError {
         case serverError
         case noText
         case invalidReference
         case referenceRecordingFailed
+        case voiceoverRecordingFailed
         var errorDescription: String? {
             switch self {
             case .serverError: "TTS server returned an error."
             case .noText: "No text to generate voice from."
             case .invalidReference: "Choose a readable voice reference recording."
             case .referenceRecordingFailed: "Could not start the reference recording."
+            case .voiceoverRecordingFailed: "Could not start the voiceover recording."
             }
         }
     }

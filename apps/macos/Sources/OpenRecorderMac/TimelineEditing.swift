@@ -447,6 +447,27 @@ struct TimelineVoiceover: Codable, Equatable, Hashable, Sendable {
     var path: String
     var startTime: Double = 0
     var voiceName: String = ""
+    /// Cached when the file is generated so the timeline can show its true span
+    /// without repeatedly opening the audio asset while SwiftUI is rendering.
+    /// Older projects decode this as zero and retain their existing behaviour.
+    var duration: Double = 0
+
+    private enum CodingKeys: String, CodingKey { case path, startTime, voiceName, duration }
+
+    init(path: String, startTime: Double = 0, voiceName: String = "", duration: Double = 0) {
+        self.path = path
+        self.startTime = startTime
+        self.voiceName = voiceName
+        self.duration = duration
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        path = try values.decode(String.self, forKey: .path)
+        startTime = try values.decodeIfPresent(Double.self, forKey: .startTime) ?? 0
+        voiceName = try values.decodeIfPresent(String.self, forKey: .voiceName) ?? ""
+        duration = try values.decodeIfPresent(Double.self, forKey: .duration) ?? 0
+    }
 }
 
 struct TimelineZoomEffect: Equatable {

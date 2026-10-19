@@ -6,7 +6,7 @@ Choose a language or Auto detect, then Generate captions. The app prepares the s
 
 Select a timestamp to seek, edit the text, and use Apply for time changes (seconds). Times must remain within the recording and cannot overlap another caption. Text edits commit on Return or when focus leaves the field. Undo/redo includes captions and timeline edits in order. Caption edits and styling are saved in the project, and reopening/editing/exporting saved captions does not require Ollama.
 
-Style controls apply to every caption: visibility, font size (relative to a 1080-pixel short edge), text/background colors, background opacity, and top/bottom placement. Long captions shrink to fit two lines. Captions remain fixed to the final canvas through zooms/crops. Video export defaults Include captions to the visibility setting; it can be overridden for that export. Subtitle files, translation, diarization, and animated word highlights are outside this version.
+Style controls apply to every caption: visibility, font size (relative to a 1080-pixel short edge), text/background colors, background opacity, and top/bottom placement. Use the preset menu for Standard, Minimal, Bold, Outline, Neon, Social, Creator, Cinema, News, and Retro starting points; choosing one preserves the current visibility and placement. Long captions shrink to fit two lines. Captions remain fixed to the final canvas through zooms/crops. Video export defaults Include captions to the visibility setting; it can be overridden for that export. Subtitle files, translation, diarization, and animated word highlights are outside this version.
 
 ## Building
 

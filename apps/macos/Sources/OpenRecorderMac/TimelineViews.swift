@@ -322,7 +322,10 @@ private struct TimelineVoiceoverRow: View {
                 Rectangle().fill(Color(red: 0.095, green: 0.095, blue: 0.11))
                 if let voiceover, duration > 0 {
                     let start = min(max(voiceover.startTime, 0), duration)
-                    let span = TimelineSpan(start: start, end: duration)
+                    let end = voiceover.duration > 0
+                        ? min(duration, start + voiceover.duration)
+                        : duration
+                    let span = TimelineSpan(start: start, end: end)
                     let leading = viewport.x(for: span.start, width: proxy.size.width, clamped: true) ?? 0
                     let trailing = viewport.x(for: span.end, width: proxy.size.width, clamped: true) ?? leading
                     HStack(spacing: 7) {

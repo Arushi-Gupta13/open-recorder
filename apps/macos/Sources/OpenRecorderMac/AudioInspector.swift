@@ -95,7 +95,7 @@ struct AudioInspector: View {
             Text("Applies to preview and export. Changes affect the recording’s combined audio.")
                 .font(.caption).foregroundStyle(.secondary)
         }
-        VoiceGeneratorInspector(edits: edits)
+        VoiceGeneratorInspector(edits: edits, playback: playback)
     }
     private func control(_ title: String, key: WritableKeyPath<AudioProcessingSettings, Double>,
                          range: ClosedRange<Double>, suffix: String, scale: Double = 1) -> some View {

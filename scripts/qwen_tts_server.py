@@ -13,6 +13,7 @@ os.environ["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + os.environ.get("PATH"
 
 import soundfile as sf
 import torch
+import torch.nn.functional as F
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -76,7 +77,22 @@ def speech(request: SpeechRequest) -> Response:
         if request.reference_audio_b64:
             reference = base64.b64decode(request.reference_audio_b64)
             samples, sample_rate = sf.read(io.BytesIO(reference), always_2d=False)
-            # 30 seconds is a strong quality/speed balance for a local clone.
+            if getattr(samples, "ndim", 1) > 1:
+                # A reference must describe one speaker, not a stereo soundstage.
+                samples = samples.mean(axis=1)
+            if sample_rate != 24_000:
+                # The speaker encoder is trained on 24 kHz mel features. Do the
+                # conversion here for imported WAVs instead of relying on a
+                # platform decoder or silently passing mismatched samples.
+                waveform = torch.as_tensor(samples, dtype=torch.float32).reshape(1, 1, -1)
+                target_frames = round(waveform.shape[-1] * 24_000 / sample_rate)
+                samples = F.interpolate(waveform, size=target_frames, mode="linear", align_corners=False).reshape(-1).numpy()
+                sample_rate = 24_000
+            if len(samples) < sample_rate * 3:
+                raise ValueError("A custom voice reference must contain at least 3 seconds of speech.")
+            # 30 seconds is the app's quality/speed ceiling. The app records
+            # exactly this much context, and exported imports are constrained
+            # before they reach this adapter.
             samples = samples[: int(sample_rate * 30)]
             wavs, sample_rate = clone_model(app).generate_voice_clone(
                 text=request.input,
