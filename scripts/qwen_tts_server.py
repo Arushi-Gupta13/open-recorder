@@ -22,6 +22,9 @@ from pydantic import BaseModel, Field
 from qwen_tts import Qwen3TTSModel
 
 MODEL_ID = os.environ.get("OPEN_RECORDER_QWEN_TTS_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+# Only the 1.7B CustomVoice checkpoint honours style instructions; the 0.6B one
+# silently drops them. It is loaded lazily, only when a tone is requested.
+TONE_MODEL_ID = os.environ.get("OPEN_RECORDER_QWEN_TTS_TONE_MODEL", "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice")
 CLONE_MODEL_ID = os.environ.get("OPEN_RECORDER_QWEN_TTS_CLONE_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-Base")
 
 
@@ -35,6 +38,7 @@ class SpeechRequest(BaseModel):
     pitch: float = Field(default=1.0, ge=0.5, le=2.0)
     reference_audio_b64: str | None = None
     reference_text: str | None = None
+    instruct: str | None = Field(default=None, max_length=500)
 
 
 def load_model(model_id: str) -> Qwen3TTSModel:
@@ -76,8 +80,19 @@ def custom_model(app: FastAPI) -> Qwen3TTSModel:
     model = getattr(app.state, "custom_model", None)
     if model is None:
         unload_model(app, "clone_model")
+        unload_model(app, "tone_model")
         model = load_model(MODEL_ID)
         app.state.custom_model = model
+    return model
+
+
+def tone_model(app: FastAPI) -> Qwen3TTSModel:
+    model = getattr(app.state, "tone_model", None)
+    if model is None:
+        unload_model(app, "custom_model")
+        unload_model(app, "clone_model")
+        model = load_model(TONE_MODEL_ID)
+        app.state.tone_model = model
     return model
 
 
@@ -87,6 +102,7 @@ def clone_model(app: FastAPI) -> Qwen3TTSModel:
         # A clone uses the Base checkpoint, not the CustomVoice checkpoint.
         # Release the normal TTS model first so both models are never resident.
         unload_model(app, "custom_model")
+        unload_model(app, "tone_model")
         model = load_model(CLONE_MODEL_ID)
         app.state.clone_model = model
     return model
@@ -175,6 +191,7 @@ async def lifespan(app: FastAPI):
     yield
     unload_model(app, "custom_model")
     unload_model(app, "clone_model")
+    unload_model(app, "tone_model")
 
 
 app = FastAPI(title="Open Recorder local Qwen3-TTS", lifespan=lifespan)
@@ -252,10 +269,12 @@ def generate_speech(request: SpeechRequest, use_transcript: bool = True):
                 max_new_tokens=max_new_tokens,
             )
         else:
-            wavs, sample_rate = custom_model(app).generate_custom_voice(
+            instruct = (request.instruct or "").strip()
+            wavs, sample_rate = (tone_model(app) if instruct else custom_model(app)).generate_custom_voice(
                 text=request.input,
                 language=request.language,
                 speaker=request.voice,
+                instruct=instruct or None,
                 max_new_tokens=max_new_tokens,
             )
         return wavs[0], sample_rate

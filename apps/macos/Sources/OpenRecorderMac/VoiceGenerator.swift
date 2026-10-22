@@ -20,8 +20,27 @@ struct VoiceGenerationConfig: Codable, Equatable, Hashable, Sendable {
         }
     }
 
+    /// How the built-in voices should sound. Sent to the TTS model as a style
+    /// instruction; cloned voices follow their reference sample instead.
+    enum Tone: String, CaseIterable, Codable, Identifiable, Sendable {
+        case neutral, warm, upbeat, energetic, calm, serious
+        var id: String { rawValue }
+        var title: String { rawValue.capitalized }
+        var instruction: String? {
+            switch self {
+            case .neutral: nil
+            case .warm: "Speak in a warm, friendly, welcoming tone with a gentle smile in the voice."
+            case .upbeat: "Speak in a cheerful, upbeat, positive tone with lively intonation."
+            case .energetic: "Speak with high energy and enthusiasm, expressive and dynamic, with plenty of pitch variation."
+            case .calm: "Speak in a calm, soothing, relaxed tone at an unhurried pace."
+            case .serious: "Speak in a confident, authoritative, professional tone."
+            }
+        }
+    }
+
     var speed: Double = 1.0
     var pitch: Double = 1.0
+    var tone: Tone = .neutral
     var voice: Voice = .vivian
     var model: String = "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice"
 
@@ -31,6 +50,7 @@ struct VoiceGenerationConfig: Codable, Equatable, Hashable, Sendable {
         VoiceGenerationConfig(
             speed: max(0.5, min(2.0, speed)),
             pitch: max(0.5, min(2.0, pitch)),
+            tone: tone,
             voice: voice,
             model: model
         )
@@ -453,10 +473,12 @@ final class VoiceGeneratorController {
         Task {
             do {
                 let outputPath = try await synthesize(chunks: Self.splitScript(text), outputDir: outputDir, prefix: "generated-voice") { _ in
-                    [
+                    var body: [String: Any] = [
                         "model": cfg.model, "voice": cfg.voice.speaker, "language": "English",
                         "speed": cfg.speed, "pitch": cfg.pitch, "response_format": "wav"
                     ]
+                    if let instruction = cfg.tone.instruction { body["instruct"] = instruction }
+                    return body
                 }
                 try await publishGeneratedAudio(at: outputPath, name: cfg.voice.title)
                 progress = 1

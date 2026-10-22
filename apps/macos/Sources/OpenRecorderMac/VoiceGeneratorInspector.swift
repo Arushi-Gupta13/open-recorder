@@ -77,7 +77,7 @@ struct VoiceGeneratorInspector: View {
             Divider().opacity(0.5)
             HStack(spacing: 8) {
                 Text("Delivery").font(.caption).foregroundStyle(.secondary)
-                Text(String(format: "Speed %.1f× · Pitch %.1f×", controller.config.speed, controller.config.pitch))
+                Text(String(format: "%@Speed %.1f× · Pitch %.1f×", controller.mode == .myVoice || controller.config.tone == .neutral ? "" : "\(controller.config.tone.title) · ", controller.config.speed, controller.config.pitch))
                     .font(.caption.monospacedDigit())
                 Spacer(minLength: 8)
                 Button("Adjust") { showsDelivery.toggle() }
@@ -92,6 +92,13 @@ struct VoiceGeneratorInspector: View {
     private var deliveryPopover: some View {
         @Bindable var controller = controller
         return VStack(alignment: .leading, spacing: 10) {
+            if controller.mode != .myVoice {
+                Picker("Tone", selection: $controller.config.tone) {
+                    ForEach(VoiceGenerationConfig.Tone.allCases) { Text($0.title).tag($0) }
+                }
+                Text("Steers emotion for built-in voices. Your own cloned voice follows your sample.")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
             InspectorSlider(title: "Speed", valueText: String(format: "%.1f×", controller.config.speed),
                 value: $controller.config.speed, range: 0.5...2.0, step: 0.1, defaultValue: 1.0, onEditingChanged: { _ in })
             InspectorSlider(title: "Pitch", valueText: String(format: "%.1f×", controller.config.pitch),
